@@ -18,15 +18,7 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.stream.Collectors.toSet;
-import static org.apache.sling.distribution.journal.messages.PackageMessage.ReqType.INVALIDATE;
-import static org.apache.sling.distribution.journal.shared.Delay.exponential;
-import static org.apache.sling.distribution.journal.shared.Strings.requireNotBlank;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -44,8 +36,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -87,12 +77,25 @@ import org.osgi.util.converter.Converters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.sling.distribution.journal.messages.PackageMessage.ReqType.INVALIDATE;
+import static org.apache.sling.distribution.journal.shared.Delay.exponential;
+import static org.apache.sling.distribution.journal.shared.Strings.requireNotBlank;
+
 /**
  * A Subscriber SCD agent which consumes messages produced by a
  * {@code DistributionPublisher} agent.
  */
-@Component(service = {}, immediate = true, property = {
-        "announceDelay=10000" }, configurationPid = "org.apache.sling.distribution.journal.impl.subscriber.DistributionSubscriberFactory")
+@Component(
+        service = {},
+        immediate = true,
+        property = {"announceDelay=10000"},
+        configurationPid = "org.apache.sling.distribution.journal.impl.subscriber.DistributionSubscriberFactory")
 @Designate(ocd = SubscriberConfiguration.class, factory = true)
 @ParametersAreNonnullByDefault
 public class DistributionSubscriber {
@@ -101,7 +104,8 @@ public class DistributionSubscriber {
     static long RETRY_DELAY_MILLIS = SECONDS.toMillis(5);
     static long MAX_RETRY_DELAY_MILLIS = MINUTES.toMillis(15);
     static long QUEUE_FETCH_DELAY_MILLIS = SECONDS.toMillis(1);
-    private static final Supplier<LongSupplier> catchAllDelays = () -> exponential(RETRY_DELAY_MILLIS, MAX_RETRY_DELAY_MILLIS);
+    private static final Supplier<LongSupplier> catchAllDelays =
+            () -> exponential(RETRY_DELAY_MILLIS, MAX_RETRY_DELAY_MILLIS);
 
     private static final Logger LOG = LoggerFactory.getLogger(DistributionSubscriber.class);
 
@@ -132,29 +136,39 @@ public class DistributionSubscriber {
     private LongSupplier catchAllDelay = catchAllDelays.get();
 
     private final Delay delay = new Delay();
-	private AtomicReference<DistributionAgentState> state = new AtomicReference<DistributionAgentState>(DistributionAgentState.IDLE);
-	
-	@Activate
-	public DistributionSubscriber(
-			@Reference(name = "packageBuilder") DistributionPackageBuilder packageBuilder,
-		    @Reference SlingSettingsService slingSettings,
-		    @Reference MessagingProvider messagingProvider,
-		    @Reference(name = "precondition") Precondition precondition,
-		    @Reference MetricsService metricsService,
-		    @Reference BookKeeperFactory bookKeeperFactory,
-		    @Reference SubscriberReadyStore subscriberReadyStore,
-		    @Reference OnlyOnLeader onlyOnLeader,
-		    SubscriberConfiguration config, BundleContext context, Map<String, Object> properties
-			) {
-		String subSlingId = requireNonNull(slingSettings.getSlingId());
+    private AtomicReference<DistributionAgentState> state =
+            new AtomicReference<DistributionAgentState>(DistributionAgentState.IDLE);
+
+    @Activate
+    public DistributionSubscriber(
+            @Reference(name = "packageBuilder") DistributionPackageBuilder packageBuilder,
+            @Reference SlingSettingsService slingSettings,
+            @Reference MessagingProvider messagingProvider,
+            @Reference(name = "precondition") Precondition precondition,
+            @Reference MetricsService metricsService,
+            @Reference BookKeeperFactory bookKeeperFactory,
+            @Reference SubscriberReadyStore subscriberReadyStore,
+            @Reference OnlyOnLeader onlyOnLeader,
+            SubscriberConfiguration config,
+            BundleContext context,
+            Map<String, Object> properties) {
+        String subSlingId = requireNonNull(slingSettings.getSlingId());
         subAgentName = requireNotBlank(config.name());
         this.precondition = requireNonNull(precondition);
-        this.subscriberMetrics = new SubscriberMetrics(metricsService, subAgentName, getFirst(config.agentNames()), config.editable());
+        this.subscriberMetrics =
+                new SubscriberMetrics(metricsService, subAgentName, getFirst(config.agentNames()), config.editable());
 
         if (config.subscriberIdleCheck()) {
             AtomicBoolean readyHolder = subscriberReadyStore.getReadyHolder(subAgentName);
             BiConsumer<ReadyReason, Duration> readyCallback = subscriberMetrics::readinessDuration;
-			idleCheck = new SubscriberReady(subAgentName, config.idleMillies(), config.forceReadyMillies(), config.acceptableAgeDiffMs(), readyHolder, System::currentTimeMillis, readyCallback);
+            idleCheck = new SubscriberReady(
+                    subAgentName,
+                    config.idleMillies(),
+                    config.forceReadyMillies(),
+                    config.acceptableAgeDiffMs(),
+                    readyHolder,
+                    System::currentTimeMillis,
+                    readyCallback);
             idleReadyCheck = new SubscriberIdleCheck(context, idleCheck, config.subscriberIdleTags());
         } else {
             idleCheck = new NoopIdle();
@@ -177,30 +191,49 @@ public class DistributionSubscriber {
                 packageNodeName,
                 commandNodeName,
                 config.contentPackageExtractorOverwritePrimaryTypesOfFolders());
-        bookKeeper = bookKeeperFactory.create(packageBuilder, bkConfig, statusSender, logSender, this.subscriberMetrics);
-        
+        bookKeeper =
+                bookKeeperFactory.create(packageBuilder, bkConfig, statusSender, logSender, this.subscriberMetrics);
+
         if (config.editable()) {
-        	Consumer<Long> clearHandler = (Long offset) -> {
-        		bookKeeper.storeClearOffset(offset);
-        		delay.signal();
-        	};
-        	
-            commandPoller = new CommandPoller(messagingProvider, subSlingId, subAgentName, bookKeeper.getClearOffset(), clearHandler);
+            Consumer<Long> clearHandler = (Long offset) -> {
+                bookKeeper.storeClearOffset(offset);
+                delay.signal();
+            };
+
+            commandPoller = new CommandPoller(
+                    messagingProvider, subSlingId, subAgentName, bookKeeper.getClearOffset(), clearHandler);
         }
 
         long startOffset = bookKeeper.loadOffset() + 1;
         String assign = startOffset > 0 ? messagingProvider.assignTo(startOffset) : null;
 
-        packagePoller = messagingProvider.createPoller(Topics.PACKAGE_TOPIC, Reset.latest, assign,
-                HandlerAdapter.create(PackageMessage.class, this::handlePackageMessage), HandlerAdapter.create(OffsetMessage.class, this::handleOffsetMessage));
+        packagePoller = messagingProvider.createPoller(
+                Topics.PACKAGE_TOPIC,
+                Reset.latest,
+                assign,
+                HandlerAdapter.create(PackageMessage.class, this::handlePackageMessage),
+                HandlerAdapter.create(OffsetMessage.class, this::handleOffsetMessage));
 
-        int announceDelay = Converters.standardConverter().convert(properties.get("announceDelay")).defaultValue(10000).to(Integer.class);
-        announcer = new Announcer(subSlingId, subAgentName, queueNames,
-                messagingProvider.createSender(Topics.DISCOVERY_TOPIC), bookKeeper,
-                config.maxRetries(), config.editable(), announceDelay);
+        int announceDelay = Converters.standardConverter()
+                .convert(properties.get("announceDelay"))
+                .defaultValue(10000)
+                .to(Integer.class);
+        announcer = new Announcer(
+                subSlingId,
+                subAgentName,
+                queueNames,
+                messagingProvider.createSender(Topics.DISCOVERY_TOPIC),
+                bookKeeper,
+                config.maxRetries(),
+                config.editable(),
+                announceDelay);
 
-        LOG.info("Started Subscriber agent={} at offset={}, subscribed to agent names {}, readyCheck={}", subAgentName, startOffset,
-                queueNames, config.subscriberIdleCheck());
+        LOG.info(
+                "Started Subscriber agent={} at offset={}, subscribed to agent names {}, readyCheck={}",
+                subAgentName,
+                startOffset,
+                queueNames,
+                config.subscriberIdleCheck());
     }
 
     private String getFirst(String[] agentNames) {
@@ -208,10 +241,7 @@ public class DistributionSubscriber {
     }
 
     public static String escapeTopicName(URI messagingUri, String topicName) {
-        return String.format("%s%s_%s",
-                messagingUri.getHost(),
-                escape(messagingUri.getPath()),
-                escape(topicName));
+        return String.format("%s%s_%s", messagingUri.getHost(), escape(messagingUri.getPath()), escape(topicName));
     }
 
     private static String escape(String st) {
@@ -235,8 +265,11 @@ public class DistributionSubscriber {
 
         IOUtils.closeQuietly(announcer, packagePoller, idleReadyCheck, idleCheck, commandPoller);
         running = false;
-        LOG.info("Stopped Subscriber agent {}, subscribed to Publisher agent names {} with package builder {}",
-                subAgentName, queueNames, pkgType);
+        LOG.info(
+                "Stopped Subscriber agent {}, subscribed to Publisher agent names {} with package builder {}",
+                subAgentName,
+                queueNames,
+                pkgType);
     }
 
     public DistributionAgentState getState() {
@@ -245,14 +278,14 @@ public class DistributionSubscriber {
     }
 
     private void handlePackageMessage(MessageInfo info, PackageMessage message) {
-    	boolean done = false;
-    	while (!done && running) {
-    		done = tryProcess(info, message);
+        boolean done = false;
+        while (!done && running) {
+            done = tryProcess(info, message);
         }
     }
 
-	public boolean tryProcess(MessageInfo info, PackageMessage message) {
-		if (shouldSkip(info, message)) {
+    public boolean tryProcess(MessageInfo info, PackageMessage message) {
+        if (shouldSkip(info, message)) {
             try {
                 bookKeeper.skipPackage(info.getOffset());
             } catch (PersistenceException | LoginException e) {
@@ -260,8 +293,9 @@ public class DistributionSubscriber {
             }
             return true;
         }
-        subscriberMetrics.getPackageJournalDistributionDuration()
-        	.update((currentTimeMillis() - info.getCreateTime()), TimeUnit.MILLISECONDS);
+        subscriberMetrics
+                .getPackageJournalDistributionDuration()
+                .update((currentTimeMillis() - info.getCreateTime()), TimeUnit.MILLISECONDS);
         try {
             processPackageMessage(info, message);
             catchAllDelay = catchAllDelays.get();
@@ -282,7 +316,7 @@ public class DistributionSubscriber {
             announcer.run();
         }
         return true;
-	}
+    }
 
     private void handleOffsetMessage(MessageInfo info, OffsetMessage message) {
         bookKeeper.handleInitialOffset(info.getOffset());
@@ -304,7 +338,8 @@ public class DistributionSubscriber {
      * Send status stored in a previous run if exists
      */
     private void blockingSendStoredStatus() throws InterruptedException {
-        try (Timer.Context context = subscriberMetrics.getSendStoredStatusDuration().time()) {
+        try (Timer.Context context =
+                subscriberMetrics.getSendStoredStatusDuration().time()) {
             int retry = 0;
             while (running) {
                 if (bookKeeper.sendStoredStatus(retry)) {
@@ -313,19 +348,20 @@ public class DistributionSubscriber {
                 retry++;
             }
         } catch (IOException e) {
-        	// Ignore .. This is just from timer close
-		}
-        
+            // Ignore .. This is just from timer close
+        }
+
         throw new InterruptedException("Shutting down");
     }
 
     private void processPackageMessage(MessageInfo info, PackageMessage pkgMsg)
-            throws PersistenceException, LoginException, DistributionException, ImportPostProcessException, InterruptedException {
+            throws PersistenceException, LoginException, DistributionException, ImportPostProcessException,
+                    InterruptedException {
         blockingSendStoredStatus();
         boolean skip = shouldRemove(info.getOffset());
         PackageMessage.ReqType type = pkgMsg.getReqType();
         try {
-        	this.state.set(DistributionAgentState.RUNNING);
+            this.state.set(DistributionAgentState.RUNNING);
             idleCheck.busy(bookKeeper.getRetries(pkgMsg.getPubAgentName()), info.getCreateTime());
             Date importStartTime = new Date();
             Date createdTime = new Date(info.getCreateTime());
@@ -365,11 +401,10 @@ public class DistributionSubscriber {
                 return decision;
             }
         }
-        final String msg = String.format("Timeout after %s seconds while waiting to meet the preconditions"
-                + " to import the distribution package at offset %s on topic status",
-                MILLISECONDS.toSeconds(PRECONDITION_TIMEOUT_MILLIS),
-                offset);
+        final String msg = String.format(
+                "Timeout after %s seconds while waiting to meet the preconditions"
+                        + " to import the distribution package at offset %s on topic status",
+                MILLISECONDS.toSeconds(PRECONDITION_TIMEOUT_MILLIS), offset);
         throw new PreConditionTimeoutException(msg);
     }
-
 }

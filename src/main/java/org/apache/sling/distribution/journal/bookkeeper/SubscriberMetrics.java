@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static org.apache.sling.distribution.journal.metrics.TaggedMetrics.getMetricName;
-
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +35,8 @@ import org.apache.sling.distribution.journal.impl.subscriber.IdleCheck;
 import org.apache.sling.distribution.journal.messages.PackageStatusMessage.Status;
 import org.apache.sling.distribution.journal.metrics.Tag;
 
+import static org.apache.sling.distribution.journal.metrics.TaggedMetrics.getMetricName;
+
 /**
  * Metrics for DistributionSubscriber
  * most metrics will have two parameters:
@@ -45,24 +45,24 @@ import org.apache.sling.distribution.journal.metrics.Tag;
 public class SubscriberMetrics {
     // Name of the subscriber agent
     private static final String TAG_SUB_NAME = "sub_name";
-    
+
     // Name of the subscribed publish agent (first only if more than one)
     private static final String TAG_PUB_NAME = "pub_name";
-    
+
     // Status of a package see org.apache.sling.distribution.journal.messages.PackageStatusMessage.Status
     private static final String TAG_STATUS = "status";
-    
+
     // Is the queue editable (true, false)
     private static final String TAG_EDITABLE = "editable";
-    
+
     // See IdleCheck.ReadyReason
     private static final String TAG_READY_REASON = "ready_reason";
-    
+
     public static final String SUB_COMPONENT = "distribution.journal.subscriber.";
-    
+
     private static final String PACKAGE_STATUS_COUNT = SUB_COMPONENT + "package_status_count";
-    
-    // Number of packages with at least one failure to apply 
+
+    // Number of packages with at least one failure to apply
     private static final String CURRENT_RETRIES = SUB_COMPONENT + "current_retries";
 
     // Cumulated size of all packages (parameters: TAG_SUB_NAME, editable (golden publish))
@@ -70,43 +70,44 @@ public class SubscriberMetrics {
 
     // Increased on every failure to apply a package
     private static final String FAILED_PACKAGE_IMPORTS = SUB_COMPONENT + "failed_package_imports";
-    
+
     // Increased when a package failed before but then succeeded (parameters: agent, editable (golden publish))
     private static final String TRANSIENT_IMPORT_ERRORS = SUB_COMPONENT + "transient_import_errors";
 
     // Only counted in error queue setup
     private static final String PERMANENT_IMPORT_ERRORS = SUB_COMPONENT + "permanent_import_errors";
-    
+
     // Counts every package that fails more than n times an thus causes a blocked queue
     private static final String BLOCKING_IMPORT_ERRORS = SUB_COMPONENT + "import_errors";
 
-	
     private static final String IMPORT_PRE_PROCESS_REQUEST_COUNT = SUB_COMPONENT + "import_pre_process_request_count";
     private static final String IMPORT_POST_PROCESS_SUCCESS_COUNT = SUB_COMPONENT + "import_post_process_success_count";
     private static final String IMPORT_POST_PROCESS_REQUEST_COUNT = SUB_COMPONENT + "import_post_process_request_count";
-    private static final String INVALIDATION_PROCESS_SUCCESS_COUNT = SUB_COMPONENT + "invalidation_process_success_count";
-    private static final String INVALIDATION_PROCESS_REQUEST_COUNT = SUB_COMPONENT + "invalidation_process_request_count";
+    private static final String INVALIDATION_PROCESS_SUCCESS_COUNT =
+            SUB_COMPONENT + "invalidation_process_success_count";
+    private static final String INVALIDATION_PROCESS_REQUEST_COUNT =
+            SUB_COMPONENT + "invalidation_process_request_count";
     private static final String IMPORT_PRE_PROCESS_SUCCESS_COUNT = SUB_COMPONENT + "import_pre_process_success_count";
-	
+
     private static final String IMPORTED_PACKAGE_DURATION = SUB_COMPONENT + "imported_package_duration";
-	private static final String IMPORT_PACKAGE_INSTALL_DURATION = SUB_COMPONENT + "package_install_duration";
-	private static final String IMPORT_PACKAGE_INSTALL_COUNT = SUB_COMPONENT + "package_install_count";
+    private static final String IMPORT_PACKAGE_INSTALL_DURATION = SUB_COMPONENT + "package_install_duration";
+    private static final String IMPORT_PACKAGE_INSTALL_COUNT = SUB_COMPONENT + "package_install_count";
     private static final String REMOVED_PACKAGE_DURATION = SUB_COMPONENT + "removed_package_duration";
     private static final String REMOVED_FAILED_PACKAGE_DURATION = SUB_COMPONENT + "removed_failed_package_duration";
     private static final String SEND_STORED_STATUS_DURATION = SUB_COMPONENT + "send_stored_status_duration";
     private static final String REQUEST_DISTRIBUTED_DURATION = SUB_COMPONENT + "request_distributed_duration";
-    private static final String PACKAGE_JOURNAL_DISTRIBUTION_DURATION = SUB_COMPONENT + "package_journal_distribution_duration";
+    private static final String PACKAGE_JOURNAL_DISTRIBUTION_DURATION =
+            SUB_COMPONENT + "package_journal_distribution_duration";
     private static final String IMPORT_PRE_PROCESS_DURATION = SUB_COMPONENT + "import_pre_process_duration";
     private static final String IMPORT_POST_PROCESS_DURATION = SUB_COMPONENT + "import_post_process_duration";
     private static final String INVALIDATION_PROCESS_DURATION = SUB_COMPONENT + "invalidation_process_duration";
     private static final String CURRENT_IMPORT_DURATION = SUB_COMPONENT + "current_import_duration";
-    
+
     // in seconds
     private static final String READINESS_DURATION = SUB_COMPONENT + "readiness_duration";
 
-	private static final String FV_MESSAGE_COUNT = SUB_COMPONENT + "fv_message_count";
-	private static final String FV_ERROR_COUNT = SUB_COMPONENT + "fv_error_count";
-
+    private static final String FV_MESSAGE_COUNT = SUB_COMPONENT + "fv_message_count";
+    private static final String FV_ERROR_COUNT = SUB_COMPONENT + "fv_error_count";
 
     private final MetricsService metricsService;
     private final Tag tagSubName;
@@ -116,15 +117,13 @@ public class SubscriberMetrics {
 
     private final AtomicReference<CurrentImportInfo> currentImportInfo = new AtomicReference<CurrentImportInfo>();
 
-    public SubscriberMetrics(MetricsService metricsService, String subAgentName, String pubAgentName, boolean editable) {
+    public SubscriberMetrics(
+            MetricsService metricsService, String subAgentName, String pubAgentName, boolean editable) {
         this.metricsService = metricsService;
         tagSubName = Tag.of(TAG_SUB_NAME, subAgentName);
         tagEditable = Tag.of(TAG_EDITABLE, Boolean.toString(editable));
         tagPubName = Tag.of(TAG_PUB_NAME, pubAgentName);
-        tags = Arrays.asList(
-                tagSubName, 
-                tagPubName,
-                tagEditable);
+        tags = Arrays.asList(tagSubName, tagPubName, tagEditable);
         metricsService.gauge(getMetricName(CURRENT_IMPORT_DURATION, tags), this::getCurrentImportDuration);
     }
 
@@ -212,7 +211,8 @@ public class SubscriberMetrics {
     public Counter getPackageStatusCounter(String pubAgentName, Status status) {
         Tag tagPubName2 = Tag.of(TAG_PUB_NAME, pubAgentName);
         Tag tagStatus = Tag.of(TAG_STATUS, status.name());
-        String name = getMetricName(PACKAGE_STATUS_COUNT, Arrays.asList(tagSubName, tagPubName2, tagEditable, tagStatus));
+        String name =
+                getMetricName(PACKAGE_STATUS_COUNT, Arrays.asList(tagSubName, tagPubName2, tagEditable, tagStatus));
         return metricsService.counter(name);
     }
 
@@ -239,7 +239,7 @@ public class SubscriberMetrics {
     public Counter getImportPostProcessRequest() {
         return metricsService.counter(getMetricName(IMPORT_POST_PROCESS_REQUEST_COUNT, tags));
     }
-    
+
     public Timer getPackgeInstallDuration() {
         return metricsService.timer(getMetricName(IMPORT_PACKAGE_INSTALL_DURATION, tags));
     }
@@ -251,10 +251,10 @@ public class SubscriberMetrics {
     public Timer getInvalidationProcessDuration() {
         return metricsService.timer(getMetricName(INVALIDATION_PROCESS_DURATION, tags));
     }
-    
+
     public void readinessDuration(IdleCheck.ReadyReason readyReason, Duration duration) {
-    	List<Tag> tags2 = new ArrayList<>(tags);
-    	tags2.add(Tag.of(TAG_READY_REASON, readyReason.name()));
+        List<Tag> tags2 = new ArrayList<>(tags);
+        tags2.add(Tag.of(TAG_READY_REASON, readyReason.name()));
         Timer timer = metricsService.timer(getMetricName(READINESS_DURATION, tags2));
         timer.update(duration.getSeconds(), TimeUnit.SECONDS);
     }
@@ -271,37 +271,36 @@ public class SubscriberMetrics {
         return metricsService.counter(getMetricName(TRANSIENT_IMPORT_ERRORS, tags));
     }
 
-    public Counter getPermanentImportErrors() { 
+    public Counter getPermanentImportErrors() {
         return metricsService.counter(getMetricName(PERMANENT_IMPORT_ERRORS, tags));
     }
-    
-    public Counter getBlockingImportErrors() { 
+
+    public Counter getBlockingImportErrors() {
         return metricsService.counter(getMetricName(BLOCKING_IMPORT_ERRORS, tags));
     }
-    
-    public Counter getFVMessages() { 
+
+    public Counter getFVMessages() {
         return metricsService.counter(getMetricName(FV_MESSAGE_COUNT, tags));
     }
-    
-    public Counter getFVErrors() { 
+
+    public Counter getFVErrors() {
         return metricsService.counter(getMetricName(FV_ERROR_COUNT, tags));
     }
 
     public void currentRetries(Supplier<Integer> retriesCallback) {
         metricsService.gauge(getMetricName(CURRENT_RETRIES, tags), retriesCallback);
     }
-    
+
     public void setCurrentImport(CurrentImportInfo currentImport) {
-    	this.currentImportInfo.set(currentImport);
+        this.currentImportInfo.set(currentImport);
     }
-    
+
     public void clearCurrentImport() {
-    	this.currentImportInfo.set(null);
+        this.currentImportInfo.set(null);
     }
-    
-	public long getCurrentImportDuration() {
-		CurrentImportInfo importInfo = currentImportInfo.get();
-		return importInfo == null ? 0L : importInfo.getCurrentImportDuration();
-	}
+
+    public long getCurrentImportDuration() {
+        CurrentImportInfo importInfo = currentImportInfo.get();
+        return importInfo == null ? 0L : importInfo.getCurrentImportDuration();
+    }
 }
- 

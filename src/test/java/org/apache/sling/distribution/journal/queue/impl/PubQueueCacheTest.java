@@ -18,15 +18,6 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,6 +52,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class PubQueueCacheTest {
 
@@ -82,7 +82,7 @@ public class PubQueueCacheTest {
     @Mock
     private QueuedCallback queuedCallback;
 
-    @Mock(strictness =  Strictness.LENIENT)
+    @Mock(strictness = Strictness.LENIENT)
     private CacheCallback callback;
 
     @Mock
@@ -97,11 +97,9 @@ public class PubQueueCacheTest {
 
     private MessageHandler<PackageMessage> tailHandler;
 
-
     @Before
     public void before() {
-        when(callback.createConsumer(handlerCaptor.capture()))
-                .thenReturn(poller);
+        when(callback.createConsumer(handlerCaptor.capture())).thenReturn(poller);
 
         cache = new PubQueueCache(queuedCallback, callback);
         executor = Executors.newFixedThreadPool(10);
@@ -113,7 +111,7 @@ public class PubQueueCacheTest {
         executor.shutdownNow();
         cache.close();
     }
-    
+
     @Test(expected = RuntimeException.class)
     public void testUnseededThrows() throws Exception {
         cache.getOffsetQueue(PUB_AGENT_NAME_1, 0);
@@ -144,12 +142,12 @@ public class PubQueueCacheTest {
         Future<OffsetQueue<DistributionQueueItem>> consumer1 = consumer(PUB_AGENT_NAME_1, 100);
         Future<OffsetQueue<DistributionQueueItem>> consumer2 = consumer(PUB_AGENT_NAME_1, 100);
         when(callback.fetchRange(100L, 200L))
-            .thenReturn(Arrays.asList(createTestMessage(100, PUB_AGENT_NAME_1, ReqType.ADD)));
+                .thenReturn(Arrays.asList(createTestMessage(100, PUB_AGENT_NAME_1, ReqType.ADD)));
         OffsetQueue<DistributionQueueItem> q1 = consumer1.get(5, SECONDS);
         OffsetQueue<DistributionQueueItem> q2 = consumer2.get(5, SECONDS);
         assertEquals(q1.getSize(), q2.getSize());
         assertEquals(100, cache.getMinOffset());
-        
+
         // Fetch should only happen once
         verify(callback, times(1)).fetchRange(Mockito.anyLong(), Mockito.anyLong());
     }
@@ -159,19 +157,24 @@ public class PubQueueCacheTest {
         simulateMessage(tailHandler, PUB_AGENT_NAME_3, ReqType.ADD, 0);
         simulateMessage(tailHandler, PUB_AGENT_NAME_3, ReqType.DELETE, 1);
         simulateMessage(tailHandler, PUB_AGENT_NAME_1, ReqType.ADD, 2);
-        simulateMessage(tailHandler, PUB_AGENT_NAME_3, ReqType.TEST, 3);    // TEST message does not increase the cache size
-        simulateMessage(tailHandler, PUB_AGENT_NAME_2, ReqType.TEST, 4);    // TEST message does not increase the cache size
+        simulateMessage(
+                tailHandler, PUB_AGENT_NAME_3, ReqType.TEST, 3); // TEST message does not increase the cache size
+        simulateMessage(
+                tailHandler, PUB_AGENT_NAME_2, ReqType.TEST, 4); // TEST message does not increase the cache size
         simulateMessage(tailHandler, PUB_AGENT_NAME_3, ReqType.ADD, 5);
         assertEquals(4, cache.size());
     }
 
     private void simulateMessage(MessageHandler<PackageMessage> handler, long offset) {
-        simulateMessage(handler,
+        simulateMessage(
+                handler,
                 pickAny(PUB_AGENT_NAME_1, PUB_AGENT_NAME_2, PUB_AGENT_NAME_3),
-                pickAny(ReqType.ADD, ReqType.DELETE, ReqType.TEST), offset);
+                pickAny(ReqType.ADD, ReqType.DELETE, ReqType.TEST),
+                offset);
     }
 
-    private void simulateMessage(MessageHandler<PackageMessage> handler, String pubAgentName, ReqType reqType, long offset) {
+    private void simulateMessage(
+            MessageHandler<PackageMessage> handler, String pubAgentName, ReqType reqType, long offset) {
         PackageMessage msg = createTestMessage(pubAgentName, reqType);
         simulateMessage(handler, msg, offset);
     }
@@ -180,7 +183,7 @@ public class PubQueueCacheTest {
         log.info("Simulate msg @ offset {}", offset);
         handler.handle(createInfo(offset), msg);
     }
-    
+
     private FullMessage<PackageMessage> createTestMessage(long offset, String pubAgentName, ReqType reqType) {
         return new FullMessage<>(createInfo(offset), createTestMessage(pubAgentName, reqType));
     }
@@ -212,5 +215,4 @@ public class PubQueueCacheTest {
         }
         return c[RAND.nextInt(c.length)];
     }
-
 }

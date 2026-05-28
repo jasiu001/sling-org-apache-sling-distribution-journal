@@ -18,78 +18,76 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
-import static java.lang.Math.abs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
 import java.util.Random;
 
 import org.junit.Test;
+
+import static java.lang.Math.abs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class StateTest {
 
     private static final Random RAND = new Random();
 
-    private static final String
-            PAN1 = "pubAgentName1",
+    private static final String PAN1 = "pubAgentName1",
             PAN2 = "pubAgentName2",
             SAI1 = "subAgentId1",
             SAI2 = "subAgentId2";
 
     @Test
     public void testEquality1() throws Exception {
-        State state1 = new State(PAN1, SAI1, abs(RAND.nextLong()), 10, 100,  -1, false);
-        State state2 = new State(PAN1, SAI1, abs(RAND.nextLong()), 10, 100,  -1, false);
+        State state1 = new State(PAN1, SAI1, abs(RAND.nextLong()), 10, 100, -1, false);
+        State state2 = new State(PAN1, SAI1, abs(RAND.nextLong()), 10, 100, -1, false);
         assertEquals(state1, state2);
     }
 
     @Test
     public void testEquality2() throws Exception {
-        State state1 = new State(PAN1, SAI2, 0L, 0L, 0,  -1, false);
-        State state2 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, false);
+        State state1 = new State(PAN1, SAI2, 0L, 0L, 0, -1, false);
+        State state2 = new State(PAN1, SAI1, 0L, 0L, 0, -1, false);
         assertNotEquals(state1, state2);
     }
 
     @Test
     public void testEquality3() throws Exception {
-        State state1 = new State(PAN1, SAI2, 0L, 0L, 0,  -1, false);
-        State state2 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, false);
+        State state1 = new State(PAN1, SAI2, 0L, 0L, 0, -1, false);
+        State state2 = new State(PAN1, SAI1, 0L, 0L, 0, -1, false);
         assertNotEquals(state1, state2);
     }
 
     @Test
     public void testEquality4() throws Exception {
-        State state1 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, false);
-        State state2 = new State(PAN2, SAI1, 0L, 0L, 0,  -1, false);
+        State state1 = new State(PAN1, SAI1, 0L, 0L, 0, -1, false);
+        State state2 = new State(PAN2, SAI1, 0L, 0L, 0, -1, false);
         assertNotEquals(state1, state2);
     }
 
     @Test
     public void testEquality5() throws Exception {
-        State state1 = new State(PAN1, SAI1, 0L, 100L, 0,  -1, false);
-        State state2 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, false);
+        State state1 = new State(PAN1, SAI1, 0L, 100L, 0, -1, false);
+        State state2 = new State(PAN1, SAI1, 0L, 0L, 0, -1, false);
         assertNotEquals(state1, state2);
     }
 
     @Test
     public void testEquality6() throws Exception {
-        State state1 = new State(PAN1, SAI1, 0L, 0L, 100,  -1, false);
-        State state2 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, false);
+        State state1 = new State(PAN1, SAI1, 0L, 0L, 100, -1, false);
+        State state2 = new State(PAN1, SAI1, 0L, 0L, 0, -1, false);
         assertNotEquals(state1, state2);
     }
 
     @Test
     public void testEquality7() throws Exception {
-        State state1 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, true);
-        State state2 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, false);
+        State state1 = new State(PAN1, SAI1, 0L, 0L, 0, -1, true);
+        State state2 = new State(PAN1, SAI1, 0L, 0L, 0, -1, false);
         assertNotEquals(state1, state2);
     }
 
     @Test
     public void testEquality8() throws Exception {
-        State state1 = new State(PAN1, SAI1, 0L, 0L, 0,  -1, true);
-        State state2 = new State(PAN1, SAI1, 0L, 0L, 0,  5, true);
+        State state1 = new State(PAN1, SAI1, 0L, 0L, 0, -1, true);
+        State state2 = new State(PAN1, SAI1, 0L, 0L, 0, 5, true);
         assertNotEquals(state1, state2);
     }
-
 }

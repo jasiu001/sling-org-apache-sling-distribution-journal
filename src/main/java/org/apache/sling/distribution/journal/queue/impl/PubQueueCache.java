@@ -18,11 +18,8 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-
-import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.stream.Collectors.groupingBy;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.io.Closeable;
 import java.util.HashSet;
@@ -34,10 +31,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.distribution.journal.FullMessage;
+import org.apache.sling.distribution.journal.MessageInfo;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
 import org.apache.sling.distribution.journal.queue.CacheCallback;
 import org.apache.sling.distribution.journal.queue.OffsetQueue;
@@ -47,8 +43,11 @@ import org.apache.sling.distribution.journal.shared.JMXRegistration;
 import org.apache.sling.distribution.queue.DistributionQueueItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.sling.distribution.journal.FullMessage;
-import org.apache.sling.distribution.journal.MessageInfo;
+
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Cache the distribution packages fetched from the package topic.
@@ -99,10 +98,10 @@ public class PubQueueCache {
 
     private final QueuedCallback queuedCallback;
 
-    private volatile Closeable tailPoller; //NOSONAR
+    private volatile Closeable tailPoller; // NOSONAR
 
     private final CacheCallback callback;
-    
+
     public PubQueueCache(QueuedCallback queuedCallback, CacheCallback callback) {
         this.queuedCallback = queuedCallback;
         this.callback = callback;
@@ -110,7 +109,8 @@ public class PubQueueCache {
     }
 
     @Nonnull
-    public OffsetQueue<DistributionQueueItem> getOffsetQueue(String pubAgentName, long minOffset) throws InterruptedException {
+    public OffsetQueue<DistributionQueueItem> getOffsetQueue(String pubAgentName, long minOffset)
+            throws InterruptedException {
         if (!isSeeded()) {
             throw new RuntimeException("Gave up waiting for seeded cache");
         }
@@ -151,7 +151,7 @@ public class PubQueueCache {
             // available. The headPollerLock guarantees to not
             // run head pollers concurrently.
             boolean locked = headPollerLock.tryLock(MAX_FETCH_WAIT_MS, MILLISECONDS);
-            if (! locked) {
+            if (!locked) {
                 String msg = String.format(
                         "Gave up fetching the queue state after %d ms because another thread holds the lock "
                                 + "(requested offset = %d, cached min offset = %d)",
@@ -205,32 +205,29 @@ public class PubQueueCache {
 
     private void merge(List<FullMessage<PackageMessage>> messages) {
         messages.stream()
-            .filter(this::isNotTestMessage)
-            .collect(groupingBy(message -> message.getMessage().getPubAgentName()))
-            .forEach(this::mergeByAgent);
+                .filter(this::isNotTestMessage)
+                .collect(groupingBy(message -> message.getMessage().getPubAgentName()))
+                .forEach(this::mergeByAgent);
         // update the minOffset AFTER all the messages
         // have been merged in order to avoid concurrent
         // consumers to potentially miss the non merged
         // queue items
-        messages.stream().findFirst().ifPresent(message ->
-            updateMinOffset(message.getInfo().getOffset()));
+        messages.stream()
+                .findFirst()
+                .ifPresent(message -> updateMinOffset(message.getInfo().getOffset()));
     }
-    
+
     private void mergeByAgent(String pubAgentName, List<FullMessage<PackageMessage>> messages) {
         OffsetQueueImpl<DistributionQueueItem> msgs = new OffsetQueueImpl<>();
-        messages
-            .forEach(message -> msgs.putItem(message.getInfo().getOffset(), QueueItemFactory.fromPackage(message)));
+        messages.forEach(message -> msgs.putItem(message.getInfo().getOffset(), QueueItemFactory.fromPackage(message)));
         getOrCreateQueue(pubAgentName).putItems(msgs);
         queuedCallback.queued(messages);
     }
 
-
-
     private OffsetQueue<DistributionQueueItem> getOrCreateQueue(String pubAgentName) {
         // atomically create a new queue for
         // the publisher agent if needed
-        return agentQueues.computeIfAbsent(pubAgentName,
-                this::createQueue);
+        return agentQueues.computeIfAbsent(pubAgentName, this::createQueue);
     }
 
     private boolean isNotTestMessage(FullMessage<PackageMessage> message) {

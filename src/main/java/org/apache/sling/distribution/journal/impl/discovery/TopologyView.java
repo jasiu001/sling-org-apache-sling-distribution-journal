@@ -18,11 +18,9 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
-import static java.util.Collections.unmodifiableSet;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.reducing;
-import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
+import javax.annotation.CheckForNull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -30,11 +28,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.ParametersAreNonnullByDefault;
-import javax.annotation.concurrent.Immutable;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import static java.util.Collections.unmodifiableSet;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.reducing;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 
 @Immutable
 @ParametersAreNonnullByDefault
@@ -71,7 +71,7 @@ public class TopologyView {
                 .map(State::getSubAgentId)
                 .collect(toSet());
     }
-    
+
     /**
      * Return the identifiers of subscriber agents subscribed to the given publisher agent.
      *
@@ -91,7 +91,9 @@ public class TopologyView {
      * @return states of that subscriber agent
      */
     public Set<State> getSubscriberAgentStates(String subAgentId) {
-        return states.stream().filter(state -> state.getSubAgentId().equals(subAgentId)).collect(toSet());
+        return states.stream()
+                .filter(state -> state.getSubAgentId().equals(subAgentId))
+                .collect(toSet());
     }
 
     @CheckForNull
@@ -99,7 +101,8 @@ public class TopologyView {
         return states.stream()
                 .filter(state -> state.getSubAgentId().equals(subAgentId))
                 .filter(state -> state.getPubAgentName().equals(pubAgentName))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -110,7 +113,6 @@ public class TopologyView {
     public Map<String, Long> getMinOffsetByPubAgentName() {
         return states.stream()
                 .collect(groupingBy(State::getPubAgentName, reducing(Long.MAX_VALUE, State::getOffset, Long::min)));
-
     }
 
     /**
@@ -137,8 +139,6 @@ public class TopologyView {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, JSON_STYLE)
-                .append("states", states)
-                .toString();
+        return new ToStringBuilder(this, JSON_STYLE).append("states", states).toString();
     }
 }

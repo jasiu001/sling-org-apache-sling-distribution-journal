@@ -18,12 +18,6 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static java.lang.String.format;
-import static java.lang.System.currentTimeMillis;
-import static java.util.Collections.singletonMap;
-import static org.apache.sling.api.resource.ResourceResolverFactory.SUBSERVICE;
-import static org.apache.sling.distribution.event.DistributionEventProperties.*;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -58,10 +52,16 @@ import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
+import static java.util.Collections.singletonMap;
+import static org.apache.sling.api.resource.ResourceResolverFactory.SUBSERVICE;
+import static org.apache.sling.distribution.event.DistributionEventProperties.*;
+
 /**
- * Keeps track of offset and processed status and manages 
+ * Keeps track of offset and processed status and manages
  * coordinates the import/retry handling.
- * 
+ *
  * The offset store is identified by the agentName only.
  *
  * With non clustered publish instances deployment, each
@@ -87,7 +87,6 @@ public class BookKeeper {
     private static final String SUBSERVICE_BOOKKEEPER = "bookkeeper";
     private static final int RETRY_SEND_DELAY = 1000;
     public static final int NUM_ERRORS_BLOCKING = 4;
-    
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final ResourceResolverFactory resolverFactory;
@@ -108,19 +107,24 @@ public class BookKeeper {
     private final InvalidationProcessor invalidationProcessor;
     private int skippedCounter = 0;
 
-    public BookKeeper(ResourceResolverFactory resolverFactory, SubscriberMetrics subscriberMetrics,
-        PackageHandler packageHandler, EventAdmin eventAdmin, Consumer<PackageStatusMessage> sender, Consumer<LogMessage> logSender,
-        BookKeeperConfig config, 
-        ImportPreProcessor importPreProcessor, 
-        ImportPostProcessor importPostProcessor, 
-        InvalidationProcessor invalidationProcessor) {
-    	
+    public BookKeeper(
+            ResourceResolverFactory resolverFactory,
+            SubscriberMetrics subscriberMetrics,
+            PackageHandler packageHandler,
+            EventAdmin eventAdmin,
+            Consumer<PackageStatusMessage> sender,
+            Consumer<LogMessage> logSender,
+            BookKeeperConfig config,
+            ImportPreProcessor importPreProcessor,
+            ImportPostProcessor importPostProcessor,
+            InvalidationProcessor invalidationProcessor) {
+
         this.packageHandler = packageHandler;
         this.eventAdmin = eventAdmin;
         this.sender = sender;
         this.logSender = logSender;
         this.config = config;
-        
+
         subscriberMetrics.currentRetries(packageRetries::getSum);
         this.resolverFactory = resolverFactory;
         this.subscriberMetrics = subscriberMetrics;
@@ -135,7 +139,7 @@ public class BookKeeper {
         this.invalidationProcessor = invalidationProcessor;
         log.info("Started bookkeeper {}.", config);
     }
-    
+
     /**
      * We aim at processing the packages exactly once. Processing the packages
      * exactly once is possible with the following conditions
@@ -144,19 +148,21 @@ public class BookKeeper {
      *
      * II. A single commit aggregates three content updates
      *
-     * C1. install the package 
-     * C2. store the processing status 
+     * C1. install the package
+     * C2. store the processing status
      * C3. store the offset processed
      *
      * Some package importers require auto-saving or issue partial commits before
      * failing. For those packages importers, we aim at processing packages at least
      * once, thanks to the order in which the content updates are applied.
      */
-    public void importPackage(PackageMessage pkgMsg, long offset, Date createdTime, Date importStartTime) throws DistributionException {
+    public void importPackage(PackageMessage pkgMsg, long offset, Date createdTime, Date importStartTime)
+            throws DistributionException {
         log.debug("Importing distribution package {} at offset={}", pkgMsg, offset);
         String threadNameOrig = Thread.currentThread().getName();
         Thread.currentThread().setName(threadNameOrig + " (" + pkgMsg.getPkgId() + ")");
-        try (Timer.Context context = subscriberMetrics.getImportedPackageDuration().time();
+        try (Timer.Context context =
+                        subscriberMetrics.getImportedPackageDuration().time();
                 ResourceResolver importerResolver = getServiceResolver(SUBSERVICE_IMPORTER)) {
             // Execute the pre-processor
             preProcess(pkgMsg);
@@ -168,19 +174,33 @@ public class BookKeeper {
             storeOffset(importerResolver, offset);
             importerResolver.commit();
             subscriberMetrics.getImportedPackageSize().update(pkgMsg.getPkgLength());
-            subscriberMetrics.getPackageDistributedDuration().update((currentTimeMillis() - createdTime.getTime()), TimeUnit.MILLISECONDS);
-            
+            subscriberMetrics
+                    .getPackageDistributedDuration()
+                    .update((currentTimeMillis() - createdTime.getTime()), TimeUnit.MILLISECONDS);
+
             // Execute the post-processor
             postProcess(pkgMsg);
-            
+
             clearPackageRetriesOnSuccess(pkgMsg);
 
             Event event = new AppliedEvent(pkgMsg, config.getSubAgentName()).toEvent();
             eventAdmin.postEvent(event);
             Duration currentImporturation = Duration.ofMillis(System.currentTimeMillis() - importStartTime.getTime());
-            log.info("Imported distribution package {} at offset={} took importDurationMs={} created={}", pkgMsg, offset, currentImporturation.toMillis(), createdTime);
-            subscriberMetrics.getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.IMPORTED).increment();
-        } catch (DistributionException | LoginException | IOException | RuntimeException | ImportPreProcessException |ImportPostProcessException e) {
+            log.info(
+                    "Imported distribution package {} at offset={} took importDurationMs={} created={}",
+                    pkgMsg,
+                    offset,
+                    currentImporturation.toMillis(),
+                    createdTime);
+            subscriberMetrics
+                    .getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.IMPORTED)
+                    .increment();
+        } catch (DistributionException
+                | LoginException
+                | IOException
+                | RuntimeException
+                | ImportPreProcessException
+                | ImportPostProcessException e) {
             failure(pkgMsg, offset, createdTime, e);
         } finally {
             subscriberMetrics.clearCurrentImport();
@@ -188,7 +208,8 @@ public class BookKeeper {
         }
     }
 
-    public void invalidateCache(PackageMessage pkgMsg, long offset, Date createdTime, Date importStartTime) throws DistributionException {
+    public void invalidateCache(PackageMessage pkgMsg, long offset, Date createdTime, Date importStartTime)
+            throws DistributionException {
         log.debug("Invalidating the cache for the package {} at offset={}", pkgMsg, offset);
         try (ResourceResolver resolver = getServiceResolver(SUBSERVICE_BOOKKEEPER)) {
             Map<String, Object> props = this.buildProcessorPropertiesFromMessage(pkgMsg);
@@ -210,10 +231,18 @@ public class BookKeeper {
             Event event = new AppliedEvent(pkgMsg, config.getSubAgentName()).toEvent();
             eventAdmin.postEvent(event);
             long currentImporturationMs = System.currentTimeMillis() - importStartTime.getTime();
-            log.info("Invalidated the cache for the package {} at offset={}. This took importDurationMs={}", pkgMsg, offset, currentImporturationMs);
+            log.info(
+                    "Invalidated the cache for the package {} at offset={}. This took importDurationMs={}",
+                    pkgMsg,
+                    offset,
+                    currentImporturationMs);
 
-            subscriberMetrics.getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.IMPORTED).increment();
-            subscriberMetrics.getInvalidationProcessDuration().update((currentTimeMillis() - invalidationStartTime), TimeUnit.MILLISECONDS);
+            subscriberMetrics
+                    .getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.IMPORTED)
+                    .increment();
+            subscriberMetrics
+                    .getInvalidationProcessDuration()
+                    .update((currentTimeMillis() - invalidationStartTime), TimeUnit.MILLISECONDS);
             subscriberMetrics.getInvalidationProcessSuccess().increment();
         } catch (LoginException | PersistenceException | InvalidationProcessException | RuntimeException e) {
             failure(pkgMsg, offset, createdTime, e);
@@ -239,8 +268,9 @@ public class BookKeeper {
 
         log.debug("Executed import pre processor for package [{}]", packageMessage.getPkgId());
 
-        subscriberMetrics.getImportPreProcessDuration().update(
-                (currentTimeMillis() - preProcessStartTime), TimeUnit.MILLISECONDS);
+        subscriberMetrics
+                .getImportPreProcessDuration()
+                .update((currentTimeMillis() - preProcessStartTime), TimeUnit.MILLISECONDS);
         subscriberMetrics.getImportPreProcessSuccess().increment();
     }
 
@@ -255,20 +285,23 @@ public class BookKeeper {
 
         log.debug("Executed import post processor for package [{}]", pkgMsg.getPkgId());
 
-        subscriberMetrics.getImportPostProcessDuration().update((currentTimeMillis() - postProcessStartTime), TimeUnit.MILLISECONDS);
+        subscriberMetrics
+                .getImportPostProcessDuration()
+                .update((currentTimeMillis() - postProcessStartTime), TimeUnit.MILLISECONDS);
         subscriberMetrics.getImportPostProcessSuccess().increment();
     }
-    
+
     /**
      * Should be called on a exception while importing a package.
-     * 
+     *
      * When we use an error queue and the max retries is reached the package is removed.
      * In all other cases a DistributionException is thrown that signals that we should retry the
      * package.
      *
      * @throws DistributionException if the package should be retried
      */
-    private void failure(PackageMessage pkgMsg, long offset, Date createdTime, Exception e) throws DistributionException {
+    private void failure(PackageMessage pkgMsg, long offset, Date createdTime, Exception e)
+            throws DistributionException {
         subscriberMetrics.getFailedPackageImports().mark();
 
         String pubAgentName = pkgMsg.getPubAgentName();
@@ -276,14 +309,17 @@ public class BookKeeper {
         boolean giveUp = errorQueueEnabled && retries >= config.getMaxRetries();
         String retriesSt = errorQueueEnabled ? Integer.toString(config.getMaxRetries()) : "infinite";
         String action = giveUp ? "skip the package" : "retry later";
-        String msg = format("Failed attempt (%s/%s) to import the distribution package %s at offset=%d because of '%s', the importer will %s", retries, retriesSt, pkgMsg.toString(false), offset, e.getMessage(), action);
+        String msg = format(
+                "Failed attempt (%s/%s) to import the distribution package %s at offset=%d because of '%s', the importer will %s",
+                retries, retriesSt, pkgMsg.toString(false), offset, e.getMessage(), action);
         try {
             LogMessage logMessage = getLogMessage(pubAgentName, msg, e);
             logSender.accept(logMessage);
         } catch (Exception e2) {
             log.warn("Error sending log message", e2);
         }
-        Event event = DistributionFailureEvent.build(pkgMsg, offset, createdTime, retries, config.getMaxRetries(), giveUp, e);
+        Event event =
+                DistributionFailureEvent.build(pkgMsg, offset, createdTime, retries, config.getMaxRetries(), giveUp, e);
         eventAdmin.postEvent(event);
         if (giveUp) {
             log.warn(msg, e);
@@ -312,8 +348,11 @@ public class BookKeeper {
     }
 
     public void removePackage(PackageMessage pkgMsg, long offset) throws LoginException, PersistenceException {
-        log.info("Removing distribution package {} of type {} at offset {}", 
-                pkgMsg.getPkgId(), pkgMsg.getReqType(), offset);
+        log.info(
+                "Removing distribution package {} of type {} at offset {}",
+                pkgMsg.getPkgId(),
+                pkgMsg.getReqType(),
+                offset);
         Timer.Context context = subscriberMetrics.getRemovedPackageDuration().time();
         try (ResourceResolver resolver = getServiceResolver(SUBSERVICE_BOOKKEEPER)) {
             if (config.isEditable()) {
@@ -324,9 +363,11 @@ public class BookKeeper {
         }
         packageRetries.clear(pkgMsg.getPubAgentName());
         context.stop();
-        subscriberMetrics.getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.REMOVED).increment();
+        subscriberMetrics
+                .getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.REMOVED)
+                .increment();
     }
-    
+
     public void skipPackage(long offset) throws LoginException, PersistenceException {
         log.info("Skipping package at offset={}", offset);
         if (shouldCommitSkipped()) {
@@ -338,7 +379,7 @@ public class BookKeeper {
     }
 
     public synchronized boolean shouldCommitSkipped() {
-        skippedCounter ++;
+        skippedCounter++;
         if (skippedCounter > COMMIT_AFTER_NUM_SKIPPED) {
             skippedCounter = 1;
             return true;
@@ -367,7 +408,7 @@ public class BookKeeper {
             return false;
         }
     }
-    
+
     private void sendStatusMessage(PackageStatus status) {
         PackageStatusMessage pkgStatMsg = PackageStatusMessage.builder()
                 .subSlingId(config.getSubSlingId())
@@ -377,7 +418,7 @@ public class BookKeeper {
                 .status(status.status)
                 .build();
         sender.accept(pkgStatMsg);
-        log.info("Sent status message {}",  pkgStatMsg);
+        log.info("Sent status message {}", pkgStatMsg);
     }
 
     public void markStatusSent() {
@@ -388,7 +429,7 @@ public class BookKeeper {
             log.warn("Failed to mark status as sent", e);
         }
     }
-    
+
     public long loadOffset() {
         return processedOffsets.load(KEY_OFFSET, -1L);
     }
@@ -419,8 +460,11 @@ public class BookKeeper {
         try (ResourceResolver resolver = getServiceResolver(SUBSERVICE_BOOKKEEPER)) {
             long currentOffset = loadOffset();
             if (currentOffset == -1) {
-                log.info("Storing initial offset. packageNodeName={}, subagentName={}, offset={}", 
-                        config.getPackageNodeName(), config.getSubAgentName(), offset);
+                log.info(
+                        "Storing initial offset. packageNodeName={}, subagentName={}, offset={}",
+                        config.getPackageNodeName(),
+                        config.getSubAgentName(),
+                        offset);
                 storeOffset(resolver, offset);
                 resolver.commit();
             }
@@ -431,7 +475,8 @@ public class BookKeeper {
 
     private void removeFailedPackage(PackageMessage pkgMsg, long offset) throws DistributionException {
         log.info("Removing failed distribution package {} at offset={}", pkgMsg, offset);
-        Timer.Context context = subscriberMetrics.getRemovedFailedPackageDuration().time();
+        Timer.Context context =
+                subscriberMetrics.getRemovedFailedPackageDuration().time();
         try (ResourceResolver resolver = getServiceResolver(SUBSERVICE_BOOKKEEPER)) {
             storeStatus(resolver, new PackageStatus(Status.REMOVED_FAILED, offset, pkgMsg.getPubAgentName()));
             storeOffset(resolver, offset);
@@ -440,7 +485,9 @@ public class BookKeeper {
             throw new DistributionException("Error removing failed package", e);
         }
         context.stop();
-        subscriberMetrics.getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.REMOVED_FAILED).increment();
+        subscriberMetrics
+                .getPackageStatusCounter(pkgMsg.getPubAgentName(), Status.REMOVED_FAILED)
+                .increment();
     }
 
     private void storeStatus(ResourceResolver resolver, PackageStatus packageStatus) throws PersistenceException {
@@ -495,10 +542,10 @@ public class BookKeeper {
             this.pubAgentName = pubAgentName;
             this.sent = false;
         }
-        
+
         public PackageStatus(ValueMap statusMap) {
             Integer statusNum = statusMap.get("statusNumber", Integer.class);
-            this.status = statusNum !=null ? Status.fromNumber(statusNum) : null;
+            this.status = statusNum != null ? Status.fromNumber(statusNum) : null;
             this.offset = statusMap.get(KEY_OFFSET, Long.class);
             this.pubAgentName = statusMap.get("pubAgentName", String.class);
             this.sent = statusMap.get("sent", true);
@@ -513,16 +560,16 @@ public class BookKeeper {
             return s;
         }
     }
+
     public Long getClearOffset() {
-		return clearStore.load(KEY_OFFSET, Long.class);
-	}
+        return clearStore.load(KEY_OFFSET, Long.class);
+    }
 
-	public void storeClearOffset(Long offset) {
-		try {
-			clearStore.store(KEY_OFFSET, Objects.requireNonNull(offset));
-		} catch (PersistenceException e) {
-			log.warn("Unable to write clear offset={} for subAgentName={}", offset, config.getSubAgentName());
-		}
-	}
-
+    public void storeClearOffset(Long offset) {
+        try {
+            clearStore.store(KEY_OFFSET, Objects.requireNonNull(offset));
+        } catch (PersistenceException e) {
+            log.warn("Unable to write clear offset={} for subAgentName={}", offset, config.getSubAgentName());
+        }
+    }
 }

@@ -40,5 +40,4 @@ public class InMemorySender<T> implements MessageSender<T> {
     public void send(T payload, Map<String, String> properties) throws MessagingException {
         topic.send(payload);
     }
-
 }

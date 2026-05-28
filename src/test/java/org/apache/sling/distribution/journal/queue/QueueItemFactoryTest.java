@@ -18,6 +18,17 @@
  */
 package org.apache.sling.distribution.journal.queue;
 
+import java.util.Arrays;
+
+import org.apache.sling.distribution.DistributionRequestType;
+import org.apache.sling.distribution.journal.MessageInfo;
+import org.apache.sling.distribution.journal.messages.PackageMessage;
+import org.apache.sling.distribution.journal.messages.PackageMessage.ReqType;
+import org.apache.sling.distribution.journal.shared.TestMessageInfo;
+import org.apache.sling.distribution.queue.DistributionQueueItem;
+import org.hamcrest.Matcher;
+import org.junit.Test;
+
 import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_OFFSET;
 import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_PARTITION;
 import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_TIMESTAMP;
@@ -30,47 +41,36 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItemInArray;
 
-import java.util.Arrays;
-
-import org.apache.sling.distribution.DistributionRequestType;
-import org.apache.sling.distribution.journal.MessageInfo;
-import org.apache.sling.distribution.journal.messages.PackageMessage;
-import org.apache.sling.distribution.journal.messages.PackageMessage.ReqType;
-import org.apache.sling.distribution.journal.shared.TestMessageInfo;
-import org.apache.sling.distribution.queue.DistributionQueueItem;
-import org.hamcrest.Matcher;
-import org.junit.Test;
-
 public class QueueItemFactoryTest {
 
-	private DistributionQueueItem item;
+    private DistributionQueueItem item;
 
-	@Test
-	public void test() {
-		MessageInfo info = new TestMessageInfo("topic", 0, 1, 2);
-		PackageMessage message = PackageMessage.builder()
-				.pubSlingId("sling1")
-				.pkgId("pkg1")
-				.pkgType("type")
-				.paths(Arrays.asList("/"))
-				.deepPaths(Arrays.asList("/deep"))
-				.reqType(ReqType.ADD)
-				.build();
-		
-		item = QueueItemFactory.fromPackage(info, message, true);
-		
-		assertProp(RECORD_TOPIC, String.class, equalTo("topic"));
-		assertProp(RECORD_PARTITION, Integer.class, equalTo(0));
-		assertProp(RECORD_OFFSET, Long.class, equalTo(1L));
-		assertProp(RECORD_TIMESTAMP, Long.class, equalTo(2L));
-		assertProp(PROPERTY_PACKAGE_TYPE, String.class, equalTo("type"));
-		assertProp(PROPERTY_REQUEST_TYPE, DistributionRequestType.class, equalTo(DistributionRequestType.ADD));
-		assertProp(PROPERTY_REQUEST_PATHS, String[].class, hasItemInArray("/"));
-		assertProp(PROPERTY_REQUEST_DEEP_PATHS, String[].class, hasItemInArray("/deep"));
-		assertProp(QueueItemFactory.PACKAGE_MSG, PackageMessage.class, equalTo(message));
-	}
-	
-	private <T> void assertProp(String key, Class<T> type, Matcher<T> matcher) {
-		assertThat(item.get(key, type), matcher);
-	}
+    @Test
+    public void test() {
+        MessageInfo info = new TestMessageInfo("topic", 0, 1, 2);
+        PackageMessage message = PackageMessage.builder()
+                .pubSlingId("sling1")
+                .pkgId("pkg1")
+                .pkgType("type")
+                .paths(Arrays.asList("/"))
+                .deepPaths(Arrays.asList("/deep"))
+                .reqType(ReqType.ADD)
+                .build();
+
+        item = QueueItemFactory.fromPackage(info, message, true);
+
+        assertProp(RECORD_TOPIC, String.class, equalTo("topic"));
+        assertProp(RECORD_PARTITION, Integer.class, equalTo(0));
+        assertProp(RECORD_OFFSET, Long.class, equalTo(1L));
+        assertProp(RECORD_TIMESTAMP, Long.class, equalTo(2L));
+        assertProp(PROPERTY_PACKAGE_TYPE, String.class, equalTo("type"));
+        assertProp(PROPERTY_REQUEST_TYPE, DistributionRequestType.class, equalTo(DistributionRequestType.ADD));
+        assertProp(PROPERTY_REQUEST_PATHS, String[].class, hasItemInArray("/"));
+        assertProp(PROPERTY_REQUEST_DEEP_PATHS, String[].class, hasItemInArray("/deep"));
+        assertProp(QueueItemFactory.PACKAGE_MSG, PackageMessage.class, equalTo(message));
+    }
+
+    private <T> void assertProp(String key, Class<T> type, Matcher<T> matcher) {
+        assertThat(item.get(key, type), matcher);
+    }
 }

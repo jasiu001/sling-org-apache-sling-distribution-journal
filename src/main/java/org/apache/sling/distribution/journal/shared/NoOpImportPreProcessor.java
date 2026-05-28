@@ -18,12 +18,12 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import org.apache.sling.distribution.ImportPreProcessor;
-import org.osgi.service.component.annotations.Component;
+import javax.annotation.Nonnull;
 
 import java.util.Map;
 
-import javax.annotation.Nonnull;
+import org.apache.sling.distribution.ImportPreProcessor;
+import org.osgi.service.component.annotations.Component;
 
 /**
  * A no-operation (no-op) implementation of the {@link ImportPreProcessor} interface.
@@ -31,7 +31,7 @@ import javax.annotation.Nonnull;
  * no actions when its {@link #process(Map)} method is invoked. It's useful in contexts
  * where an {@link ImportPreProcessor} is required but no pre-import processing is necessary.
  */
-@Component(property = { "type=default" })
+@Component(property = {"type=default"})
 public class NoOpImportPreProcessor implements ImportPreProcessor {
 
     /**

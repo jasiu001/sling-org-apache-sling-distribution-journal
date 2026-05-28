@@ -18,6 +18,10 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.discovery.InstanceDescription;
 import org.apache.sling.discovery.TopologyEvent;
@@ -36,10 +40,6 @@ import org.mockito.Spy;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventHandler;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -124,8 +124,7 @@ public class DistributedEventNotifierManagerTest {
                 pubQueueCacheService,
                 messagingProvider,
                 resolverFactory,
-                distributedEventHandler
-        );
+                distributedEventHandler);
     }
 
     private TopologyView newViewWithInstanceDescription(boolean isLeader) {
@@ -134,9 +133,6 @@ public class DistributedEventNotifierManagerTest {
     }
 
     private <T> T configuration(Map<String, Boolean> props, Class<T> clazz) {
-        return standardConverter()
-                .convert(props)
-                .to(clazz);
+        return standardConverter().convert(props).to(clazz);
     }
-
 }

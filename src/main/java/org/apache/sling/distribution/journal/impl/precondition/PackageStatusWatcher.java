@@ -18,9 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.precondition;
 
-
-import static org.apache.sling.distribution.journal.HandlerAdapter.create;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
@@ -37,21 +34,19 @@ import org.apache.sling.distribution.journal.shared.Topics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.distribution.journal.HandlerAdapter.create;
+
 public class PackageStatusWatcher implements Closeable {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-    
+
     private final Closeable poller;
-    
+
     // subAgentName -> pkgOffset -> Status
     private final Map<String, NavigableMap<Long, Status>> pkgStatusPerSubAgent = new ConcurrentHashMap<>();
 
-
     public PackageStatusWatcher(MessagingProvider messagingProvider) {
         poller = messagingProvider.createPoller(
-                Topics.STATUS_TOPIC,
-                Reset.earliest,
-                create(PackageStatusMessage.class, this::handle)
-        );
+                Topics.STATUS_TOPIC, Reset.earliest, create(PackageStatusMessage.class, this::handle));
     }
 
     /**
@@ -77,7 +72,7 @@ public class PackageStatusWatcher implements Closeable {
     private Map<Long, Status> getAgentStatus(String subAgentName) {
         return pkgStatusPerSubAgent.computeIfAbsent(subAgentName, this::newMap);
     }
-    
+
     private NavigableMap<Long, Status> newMap(String subAgentName) {
         return new TreeMap<>();
     }

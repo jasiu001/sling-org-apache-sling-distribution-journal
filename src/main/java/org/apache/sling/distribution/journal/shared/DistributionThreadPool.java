@@ -19,9 +19,8 @@
 package org.apache.sling.distribution.journal.shared;
 
 public class DistributionThreadPool {
-    
+
     public static final String THREAD_POOL_NAME = "org-apache-sling-distribution";
 
-    private DistributionThreadPool() {
-    }
+    private DistributionThreadPool() {}
 }

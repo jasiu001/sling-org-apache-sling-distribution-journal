@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.apache.sling.distribution.journal.metrics.TaggedMetrics.getMetricName;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -30,6 +28,8 @@ import org.apache.sling.commons.metrics.Meter;
 import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.commons.metrics.Timer;
 import org.apache.sling.distribution.journal.metrics.Tag;
+
+import static org.apache.sling.distribution.journal.metrics.TaggedMetrics.getMetricName;
 
 public class PublishMetrics {
     private static final String TAG_AGENT_NAME = "pub_name";
@@ -131,10 +131,8 @@ public class PublishMetrics {
      * @param clearable {@code true} for clearable subscribers, {@code false} for non-clearable
      */
     public void queueSizeByClearable(Supplier<Integer> queueSizeCallback, boolean clearable) {
-        List<Tag> queueSizeTags = Arrays.asList(
-                Tag.of(TAG_AGENT_NAME, pubAgentName),
-                Tag.of(TAG_CLEARABLE, Boolean.toString(clearable)));
+        List<Tag> queueSizeTags =
+                Arrays.asList(Tag.of(TAG_AGENT_NAME, pubAgentName), Tag.of(TAG_CLEARABLE, Boolean.toString(clearable)));
         metricsService.gauge(getMetricName(QUEUE_SIZE, queueSizeTags), queueSizeCallback);
     }
-
 }

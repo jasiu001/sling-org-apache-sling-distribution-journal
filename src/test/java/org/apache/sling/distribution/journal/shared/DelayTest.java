@@ -75,7 +75,8 @@ public class DelayTest {
     @Test
     public void testExponentialMaxDelay() {
         LongSupplier delay = Delay.exponential(START_DELAY, MAX_DELAY);
-        long maxAfterHundredDelays = LongStream.generate(delay).limit(100).max().orElseThrow(IllegalStateException::new);
+        long maxAfterHundredDelays =
+                LongStream.generate(delay).limit(100).max().orElseThrow(IllegalStateException::new);
         assertEquals(MAX_DELAY, maxAfterHundredDelays);
     }
 
@@ -97,5 +98,4 @@ public class DelayTest {
         long stop = System.nanoTime();
         assertTrue((stop - start) >= duration);
     }
-
 }

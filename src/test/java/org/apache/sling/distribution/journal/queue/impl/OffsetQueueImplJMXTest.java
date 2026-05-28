@@ -18,12 +18,6 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
-import java.lang.management.ManagementFactory;
-import java.util.Set;
-
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -32,9 +26,15 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+import java.lang.management.ManagementFactory;
+import java.util.Set;
+
 import org.apache.sling.distribution.journal.queue.OffsetQueue;
 import org.apache.sling.distribution.journal.shared.JMXRegistration;
 import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class OffsetQueueImplJMXTest {
 
@@ -48,7 +48,8 @@ public class OffsetQueueImplJMXTest {
 
         JMXRegistration jmxReg = new JMXRegistration(queue, OffsetQueue.class.getSimpleName(), "test");
 
-        Set<ObjectInstance> mbeans = mbeanServer.queryMBeans(new ObjectName("org.apache.sling.distribution:type=OffsetQueue,id=test"), null);
+        Set<ObjectInstance> mbeans =
+                mbeanServer.queryMBeans(new ObjectName("org.apache.sling.distribution:type=OffsetQueue,id=test"), null);
         ObjectInstance mbean = mbeans.iterator().next();
         assertThat(getAttrib(mbean, "Size"), equalTo(2));
         assertThat(getAttrib(mbean, "HeadOffset"), equalTo(100L));

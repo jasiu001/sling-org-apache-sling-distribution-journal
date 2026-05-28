@@ -18,26 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.apache.sling.distribution.journal.impl.publisher.PublisherConfiguration.DEFAULT_QUEUE_SIZE_LIMIT;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,23 +62,43 @@ import org.osgi.service.condition.Condition;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.util.converter.Converters;
 
+import static org.apache.sling.distribution.journal.impl.publisher.PublisherConfiguration.DEFAULT_QUEUE_SIZE_LIMIT;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class DistributionPublisherTest {
 
     private static final String SUBAGENT1 = "subscriber-agent1";
     private static final String QUEUE_NAME = "5eb78e0f-e8a2-4589-97dd-21649b37a0da-" + SUBAGENT1;
 
-	private static final String PUB1AGENT1 = "pub1agent1";
+    private static final String PUB1AGENT1 = "pub1agent1";
 
-	@Mock
+    @Mock
     private EventAdmin eventAdmin;
-    
+
     @Mock
     private DiscoveryService discoveryService;
-    
+
     @Mock
     private PubQueueProvider pubQueueProvider;
-    
+
     @Mock
     private MessagingProvider messagingProvider;
 
@@ -117,10 +117,10 @@ public class DistributionPublisherTest {
 
     @Mock
     private MessageSender<PackageMessage> sender;
-    
+
     @Mock
     private PackageQueuedNotifier queuedNotifier;
-    
+
     @Captor
     private ArgumentCaptor<PackageMessage> pkgCaptor;
 
@@ -130,22 +130,32 @@ public class DistributionPublisherTest {
     public void before() throws Exception {
         metricsService = context.registerInjectActivateService(MetricsServiceImpl.class);
         when(packageBuilder.getType()).thenReturn("journal");
-        Map<String, String> props = Map.of("name", PUB1AGENT1,
-                "maxQueueSizeDelay", "1000");
-        PublisherConfiguration config = Converters.standardConverter().convert(props).to(PublisherConfiguration.class);
+        Map<String, String> props = Map.of("name", PUB1AGENT1, "maxQueueSizeDelay", "1000");
+        PublisherConfiguration config =
+                Converters.standardConverter().convert(props).to(PublisherConfiguration.class);
 
         BundleContext bcontext = context.bundleContext();
-        when(messagingProvider.<PackageMessage>createSender(Mockito.anyString())).thenReturn(sender);
-        publisher = new DistributionPublisher(messagingProvider, packageBuilder, discoveryService, factory,
-                eventAdmin, metricsService, pubQueueProvider, Condition.INSTANCE, config, bcontext);
+        when(messagingProvider.<PackageMessage>createSender(Mockito.anyString()))
+                .thenReturn(sender);
+        publisher = new DistributionPublisher(
+                messagingProvider,
+                packageBuilder,
+                discoveryService,
+                factory,
+                eventAdmin,
+                metricsService,
+                pubQueueProvider,
+                Condition.INSTANCE,
+                config,
+                bcontext);
         when(pubQueueProvider.getQueuedNotifier()).thenReturn(queuedNotifier);
     }
-    
+
     @After
     public void after() {
         publisher.deactivate();
     }
-    
+
     @Test
     public void executeRequestADDAccepted() throws DistributionException, IOException {
         DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.ADD, "/test");
@@ -156,7 +166,7 @@ public class DistributionPublisherTest {
         long time = stopwatch.getTime(TimeUnit.MILLISECONDS);
         assertThat(time, lessThan(1000L));
     }
-    
+
     @Test
     public void executeRequestDELETEAccepted() throws DistributionException, IOException {
         DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.DELETE, "/test");
@@ -174,7 +184,7 @@ public class DistributionPublisherTest {
         DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.TEST, "/test");
         executeAndCheck(request);
     }
-    
+
     @Test
     public void testQueueSizeLimitHalf() throws IOException, DistributionException {
         int queueSize = DEFAULT_QUEUE_SIZE_LIMIT + DEFAULT_QUEUE_SIZE_LIMIT / 2;
@@ -194,22 +204,24 @@ public class DistributionPublisherTest {
         assertThat(time, greaterThanOrEqualTo(1000L));
         assertThat(time, lessThanOrEqualTo(1050L));
     }
-    
+
     @SuppressWarnings("unchecked")
     @Test
     public void testExecutePullUnsupported() throws DistributionException, IOException {
         DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.PULL, "/test");
         DistributionResponse response = publisher.execute(resourceResolver, request);
-        
+
         assertThat(response.getState(), equalTo(DistributionRequestState.DROPPED));
         assertEquals("", response.getDistributionInfo().getId());
 
         List<String> log = publisher.getLog().getLines();
-        assertThat(log, contains(
-                containsString("Started Publisher agent=pub1agent1"),
-                containsString("not supported by this agent")));
+        assertThat(
+                log,
+                contains(
+                        containsString("Started Publisher agent=pub1agent1"),
+                        containsString("not supported by this agent")));
     }
-    
+
     @Test
     public void testQueueNames() throws DistributionException, IOException {
         when(pubQueueProvider.getQueueNames(PUB1AGENT1)).thenReturn(Collections.singleton(QUEUE_NAME));
@@ -220,7 +232,7 @@ public class DistributionPublisherTest {
     @Test
     public void testQueueNamesWithErrorQueue() throws DistributionException, IOException {
         when(pubQueueProvider.getQueueNames(Mockito.eq(PUB1AGENT1)))
-            .thenReturn(new HashSet<>(Arrays.asList(QUEUE_NAME, QUEUE_NAME + "-error")));
+                .thenReturn(new HashSet<>(Arrays.asList(QUEUE_NAME, QUEUE_NAME + "-error")));
         Iterable<String> names = publisher.getQueueNames();
         assertThat(names, containsInAnyOrder(QUEUE_NAME + "-error", QUEUE_NAME));
     }
@@ -228,15 +240,15 @@ public class DistributionPublisherTest {
     @Test
     public void testGetQueue() throws DistributionException, IOException {
         when(pubQueueProvider.getQueue(PUB1AGENT1, QUEUE_NAME))
-            .thenReturn(new PubQueue(QUEUE_NAME, new OffsetQueueImpl<>(), 0, null,null));
+                .thenReturn(new PubQueue(QUEUE_NAME, new OffsetQueueImpl<>(), 0, null, null));
         DistributionQueue queue = publisher.getQueue(QUEUE_NAME);
         assertThat(queue, notNullValue());
     }
-    
+
     @Test
     public void testGetErrorQueue() throws DistributionException, IOException {
         when(pubQueueProvider.getQueue(PUB1AGENT1, QUEUE_NAME + "-error"))
-            .thenReturn(new PubQueue(QUEUE_NAME, new OffsetQueueImpl<>(), 0, null,null));
+                .thenReturn(new PubQueue(QUEUE_NAME, new OffsetQueueImpl<>(), 0, null, null));
         DistributionQueue queue = publisher.getQueue(QUEUE_NAME + "-error");
         assertThat(queue, notNullValue());
     }
@@ -247,13 +259,12 @@ public class DistributionPublisherTest {
         DistributionQueue queue = publisher.getQueue("i_am_not_a_queue");
         assertNull(queue);
         long count = getQueueAccessErrorCount();
-        assertEquals("Wrong queue counter expected",1, count);
+        assertEquals("Wrong queue counter expected", 1, count);
     }
 
     @Test
     public void testGetQueueErrorMetrics() throws DistributionException, IOException {
-       when(pubQueueProvider.getQueue(Mockito.any(), Mockito.any()))
-            .thenThrow(new RuntimeException("Error"));
+        when(pubQueueProvider.getQueue(Mockito.any(), Mockito.any())).thenThrow(new RuntimeException("Error"));
 
         try {
             publisher.getQueue(QUEUE_NAME);
@@ -261,19 +272,28 @@ public class DistributionPublisherTest {
         } catch (RuntimeException expectedException) {
         }
         long count = getQueueAccessErrorCount();
-        assertEquals("Wrong getQueue error counter",1, count);
+        assertEquals("Wrong getQueue error counter", 1, count);
     }
 
     @Test
     public void testAggregatedQueueNamesDelegatesToAggregatedProvider() {
-        Map<String, Object> props = Map.of(
-                "name", PUB1AGENT1,
-                "maxQueueSizeDelay", "1000",
-                "aggregateSubscriberQueues", Boolean.TRUE);
-        PublisherConfiguration config = Converters.standardConverter().convert(props).to(PublisherConfiguration.class);
-        DistributionPublisher aggPublisher = new DistributionPublisher(messagingProvider, packageBuilder, discoveryService, factory,
-                eventAdmin, metricsService, pubQueueProvider, Condition.INSTANCE, config, context.bundleContext());
-        when(pubQueueProvider.getAggregatedQueueNames(PUB1AGENT1)).thenReturn(Set.of(PubQueueProvider.AGGREGATED_QUEUE_PERSISTED));
+        Map<String, Object> props =
+                Map.of("name", PUB1AGENT1, "maxQueueSizeDelay", "1000", "aggregateSubscriberQueues", Boolean.TRUE);
+        PublisherConfiguration config =
+                Converters.standardConverter().convert(props).to(PublisherConfiguration.class);
+        DistributionPublisher aggPublisher = new DistributionPublisher(
+                messagingProvider,
+                packageBuilder,
+                discoveryService,
+                factory,
+                eventAdmin,
+                metricsService,
+                pubQueueProvider,
+                Condition.INSTANCE,
+                config,
+                context.bundleContext());
+        when(pubQueueProvider.getAggregatedQueueNames(PUB1AGENT1))
+                .thenReturn(Set.of(PubQueueProvider.AGGREGATED_QUEUE_PERSISTED));
         Iterable<String> names = aggPublisher.getQueueNames();
         assertThat(names, contains(PubQueueProvider.AGGREGATED_QUEUE_PERSISTED));
         verify(pubQueueProvider).getAggregatedQueueNames(PUB1AGENT1);
@@ -283,15 +303,24 @@ public class DistributionPublisherTest {
 
     @Test
     public void testAggregatedGetQueueDelegatesToAggregatedProvider() {
-        Map<String, Object> props = Map.of(
-                "name", PUB1AGENT1,
-                "maxQueueSizeDelay", "1000",
-                "aggregateSubscriberQueues", Boolean.TRUE);
-        PublisherConfiguration config = Converters.standardConverter().convert(props).to(PublisherConfiguration.class);
-        DistributionPublisher aggPublisher = new DistributionPublisher(messagingProvider, packageBuilder, discoveryService, factory,
-                eventAdmin, metricsService, pubQueueProvider, Condition.INSTANCE, config, context.bundleContext());
+        Map<String, Object> props =
+                Map.of("name", PUB1AGENT1, "maxQueueSizeDelay", "1000", "aggregateSubscriberQueues", Boolean.TRUE);
+        PublisherConfiguration config =
+                Converters.standardConverter().convert(props).to(PublisherConfiguration.class);
+        DistributionPublisher aggPublisher = new DistributionPublisher(
+                messagingProvider,
+                packageBuilder,
+                discoveryService,
+                factory,
+                eventAdmin,
+                metricsService,
+                pubQueueProvider,
+                Condition.INSTANCE,
+                config,
+                context.bundleContext());
         PubQueue q = new PubQueue(PubQueueProvider.AGGREGATED_QUEUE_PERSISTED, new OffsetQueueImpl<>(), 0, null, null);
-        when(pubQueueProvider.getAggregatedQueue(PUB1AGENT1, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED)).thenReturn(q);
+        when(pubQueueProvider.getAggregatedQueue(PUB1AGENT1, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED))
+                .thenReturn(q);
         assertThat(aggPublisher.getQueue(PubQueueProvider.AGGREGATED_QUEUE_PERSISTED), sameInstance(q));
         verify(pubQueueProvider).getAggregatedQueue(PUB1AGENT1, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED);
         verify(pubQueueProvider, never()).getQueue(anyString(), anyString());
@@ -299,7 +328,9 @@ public class DistributionPublisherTest {
     }
 
     private long getQueueAccessErrorCount() {
-        return new PublishMetrics(metricsService, PUB1AGENT1).getQueueAccessErrorCount().getCount();
+        return new PublishMetrics(metricsService, PUB1AGENT1)
+                .getQueueAccessErrorCount()
+                .getCount();
     }
 
     @Test(expected = DistributionException.class)
@@ -310,7 +341,7 @@ public class DistributionPublisherTest {
 
     @Test
     public void testEmptyRequest() throws DistributionException {
-        DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.ADD, new String[] { "/" });
+        DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.ADD, new String[] {"/"});
         when(factory.create(any(), any(), anyString(), any())).thenReturn(null);
 
         DistributionResponse response = publisher.execute(resourceResolver, request);
@@ -330,23 +361,28 @@ public class DistributionPublisherTest {
     @SuppressWarnings("unchecked")
     private void executeAndCheck(DistributionRequest request) throws IOException, DistributionException {
         PackageMessage pkg = mockPackage(request);
-        when(factory.create(any(DistributionPackageBuilder.class),Mockito.eq(resourceResolver), anyString(), Mockito.eq(request))).thenReturn(pkg);
+        when(factory.create(
+                        any(DistributionPackageBuilder.class),
+                        Mockito.eq(resourceResolver),
+                        anyString(),
+                        Mockito.eq(request)))
+                .thenReturn(pkg);
         CompletableFuture<Long> callback = CompletableFuture.completedFuture(-1L);
         when(queuedNotifier.registerWait(Mockito.eq(pkg.getPkgId()))).thenReturn(callback);
-    
+
         DistributionResponse response = publisher.execute(resourceResolver, request);
-        
+
         assertThat(response.getState(), equalTo(DistributionRequestState.ACCEPTED));
         assertEquals("myid", response.getDistributionInfo().getId());
         verify(sender).accept(pkgCaptor.capture());
         PackageMessage sent = pkgCaptor.getValue();
         // Individual fields are checks in factory
         assertThat(sent, notNullValue());
-        
+
         List<String> log = publisher.getLog().getLines();
-        assertThat(log, contains(
-                containsString("Started Publisher agent=pub1agent1"),
-                containsString("Request accepted")));
+        assertThat(
+                log,
+                contains(containsString("Started Publisher agent=pub1agent1"), containsString("Request accepted")));
     }
 
     private PackageMessage mockPackage(DistributionRequest request) throws IOException {
@@ -360,5 +396,4 @@ public class DistributionPublisherTest {
                 .pkgBinary(new byte[100])
                 .build();
     }
-
 }

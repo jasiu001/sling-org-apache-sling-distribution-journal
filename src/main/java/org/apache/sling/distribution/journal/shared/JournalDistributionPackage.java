@@ -18,12 +18,13 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import org.apache.sling.distribution.packaging.DistributionPackage;
-import org.apache.sling.distribution.packaging.DistributionPackageInfo;
-
 import javax.annotation.Nonnull;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+
+import org.apache.sling.distribution.packaging.DistributionPackage;
+import org.apache.sling.distribution.packaging.DistributionPackageInfo;
 
 public class JournalDistributionPackage implements DistributionPackage {
 
@@ -37,7 +38,8 @@ public class JournalDistributionPackage implements DistributionPackage {
 
     private final DistributionPackageInfo info;
 
-    public JournalDistributionPackage(@Nonnull String id, @Nonnull String type, @Nonnull byte[] data, @Nonnull DistributionPackageInfo info) {
+    public JournalDistributionPackage(
+            @Nonnull String id, @Nonnull String type, @Nonnull byte[] data, @Nonnull DistributionPackageInfo info) {
         this.id = id;
         this.type = type;
         this.size = data.length;

@@ -29,5 +29,4 @@ public interface TopologyChangeHandler {
      * @param diffView the diff between the old and new topology views
      */
     void changed(TopologyViewDiff diffView);
-
 }

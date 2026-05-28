@@ -21,5 +21,4 @@ package org.apache.sling.distribution.journal.queue;
 public interface PubQueueProviderFactory {
 
     PubQueueProvider create(CacheCallback callback);
-
 }

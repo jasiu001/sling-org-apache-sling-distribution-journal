@@ -18,6 +18,9 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
+import java.io.ByteArrayInputStream;
+import java.util.UUID;
+
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.DistributionRequest;
@@ -33,9 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.ByteArrayInputStream;
-import java.util.UUID;
 
 import static java.util.Map.of;
 import static org.apache.sling.distribution.DistributionRequestType.ADD;
@@ -69,11 +69,12 @@ public class JournalDistributionPackageBuilderTest {
 
     @Before
     public void setUp() {
-        when(resolver.getResource(anyString()))
-                .thenReturn(resource);
+        when(resolver.getResource(anyString())).thenReturn(resource);
         when(serializerProvider.build(anyString(), any(ExportSettings.class), any(ImportSettings.class)))
                 .thenReturn(serializer);
-        Configuration config = standardConverter().convert(of("/some/path", "/some/other/path")).to(Configuration.class);
+        Configuration config = standardConverter()
+                .convert(of("/some/path", "/some/other/path"))
+                .to(Configuration.class);
         builder = new JournalDistributionPackageBuilder(config, serializerProvider);
         assertEquals("journal-distribution", builder.getType());
     }

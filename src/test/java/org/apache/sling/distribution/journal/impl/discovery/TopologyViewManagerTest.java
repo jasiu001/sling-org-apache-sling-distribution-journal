@@ -18,15 +18,15 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
+import java.util.Set;
+
+import org.junit.Test;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import java.util.Set;
-
-import org.junit.Test;
 
 public class TopologyViewManagerTest {
 
@@ -46,17 +46,23 @@ public class TopologyViewManagerTest {
 
     private static final long TIMESTAMP_4 = TIMESTAMP_3 + 50;
 
-    private static final State AGENT_NAME_1_STATE_1 = new State(AGENT_NAME_1, SUB_AGENT_ID_1, TIMESTAMP_1, 10L, 0, -1, false);
+    private static final State AGENT_NAME_1_STATE_1 =
+            new State(AGENT_NAME_1, SUB_AGENT_ID_1, TIMESTAMP_1, 10L, 0, -1, false);
 
-    private static final State AGENT_NAME_1_STATE_2 = new State(AGENT_NAME_1, SUB_AGENT_ID_2, TIMESTAMP_2, 5L, 0, -1, false);
+    private static final State AGENT_NAME_1_STATE_2 =
+            new State(AGENT_NAME_1, SUB_AGENT_ID_2, TIMESTAMP_2, 5L, 0, -1, false);
 
-    private static final State AGENT_NAME_1_STATE_3 = new State(AGENT_NAME_1, SUB_AGENT_ID_1, TIMESTAMP_3, 20L, 0, -1, false);
+    private static final State AGENT_NAME_1_STATE_3 =
+            new State(AGENT_NAME_1, SUB_AGENT_ID_1, TIMESTAMP_3, 20L, 0, -1, false);
 
-    private static final State AGENT_NAME_1_STATE_4 = new State(AGENT_NAME_1, SUB_AGENT_ID_1, TIMESTAMP_4, 20L, 0, -1, false);
+    private static final State AGENT_NAME_1_STATE_4 =
+            new State(AGENT_NAME_1, SUB_AGENT_ID_1, TIMESTAMP_4, 20L, 0, -1, false);
 
-    private static final State AGENT_NAME_2_STATE_1 = new State(AGENT_NAME_2, SUB_AGENT_ID_1, TIMESTAMP_1, 15L, 0, -1, false);
+    private static final State AGENT_NAME_2_STATE_1 =
+            new State(AGENT_NAME_2, SUB_AGENT_ID_1, TIMESTAMP_1, 15L, 0, -1, false);
 
-    private static final State AGENT_NAME_2_STATE_2 = new State(AGENT_NAME_2, SUB_AGENT_ID_2, TIMESTAMP_3, 15L, 0, -1, false);
+    private static final State AGENT_NAME_2_STATE_2 =
+            new State(AGENT_NAME_2, SUB_AGENT_ID_2, TIMESTAMP_3, 15L, 0, -1, false);
 
     private static final long REFRESH_TTL = 10L;
 
@@ -98,7 +104,6 @@ public class TopologyViewManagerTest {
         Set<String> s5 = viewManager.getCurrentView().getSubscribedAgentIds();
         assertThat(s5, containsInAnyOrder(SUB_AGENT_ID_2));
         assertEquals(4, viewManager.size());
-
     }
 
     @Test

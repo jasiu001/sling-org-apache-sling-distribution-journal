@@ -18,6 +18,29 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.distribution.DistributionRequest;
+import org.apache.sling.distribution.DistributionRequestType;
+import org.apache.sling.distribution.SimpleDistributionRequest;
+import org.apache.sling.distribution.common.DistributionException;
+import org.apache.sling.distribution.journal.BinaryStore;
+import org.apache.sling.distribution.journal.messages.PackageMessage;
+import org.apache.sling.distribution.journal.messages.PackageMessage.ReqType;
+import org.apache.sling.distribution.packaging.DistributionPackage;
+import org.apache.sling.distribution.packaging.DistributionPackageBuilder;
+import org.apache.sling.distribution.packaging.DistributionPackageInfo;
+import org.apache.sling.settings.SlingSettingsService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,29 +52,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.osgi.util.converter.Converters.standardConverter;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.distribution.DistributionRequest;
-import org.apache.sling.distribution.DistributionRequestType;
-import org.apache.sling.distribution.SimpleDistributionRequest;
-import org.apache.sling.distribution.common.DistributionException;
-import org.apache.sling.distribution.journal.messages.PackageMessage;
-import org.apache.sling.distribution.journal.messages.PackageMessage.ReqType;
-import org.apache.sling.distribution.journal.BinaryStore;
-import org.apache.sling.distribution.packaging.DistributionPackage;
-import org.apache.sling.distribution.packaging.DistributionPackageBuilder;
-import org.apache.sling.distribution.packaging.DistributionPackageInfo;
-import org.apache.sling.settings.SlingSettingsService;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class DistributionPackageFactoryTest {
 
@@ -76,9 +76,8 @@ public class DistributionPackageFactoryTest {
         when(packageBuilder.getType()).thenReturn("journal");
         when(slingSettings.getSlingId()).thenReturn("pub1sling");
 
-        PackageFactoryConfiguration config = standardConverter()
-                .convert(emptyMap())
-                .to(PackageFactoryConfiguration.class);
+        PackageFactoryConfiguration config =
+                standardConverter().convert(emptyMap()).to(PackageFactoryConfiguration.class);
         publisher.activate(config);
 
         when(resourceResolver.getUserID()).thenReturn("testUser");
@@ -94,7 +93,7 @@ public class DistributionPackageFactoryTest {
         assertNull(publisher.create(packageBuilder, resourceResolver, "pub1agent1", add));
         assertNull(publisher.create(packageBuilder, resourceResolver, "pub1agent1", delete));
     }
-    
+
     @Test
     public void testAdd() throws DistributionException, IOException {
         DistributionRequest request = new SimpleDistributionRequest(DistributionRequestType.ADD, "/test");
@@ -102,19 +101,18 @@ public class DistributionPackageFactoryTest {
         DistributionPackage pkg = mock(DistributionPackage.class);
         when(binaryStore.put(anyString(), any(), anyLong())).thenReturn(null);
 
-        when(pkg.createInputStream()).thenReturn(new ByteArrayInputStream(new byte[] { 0x00 }));
+        when(pkg.createInputStream()).thenReturn(new ByteArrayInputStream(new byte[] {0x00}));
         when(pkg.getSize()).thenReturn(1L);
         when(pkg.getId()).thenReturn("myid");
         Map<String, Object> props = new HashMap<>();
         props.put(DistributionPackageInfo.PROPERTY_REQUEST_PATHS, request.getPaths());
         props.put(DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS, "/test2");
-        DistributionPackageInfo info = new DistributionPackageInfo("journal",
-                props);
+        DistributionPackageInfo info = new DistributionPackageInfo("journal", props);
         when(pkg.getInfo()).thenReturn(info);
         when(packageBuilder.createPackage(resourceResolver, request)).thenReturn(pkg);
 
         PackageMessage sent = publisher.create(packageBuilder, resourceResolver, "pub1agent1", request);
-        
+
         assertThat(sent.getPkgBinary(), notNullValue());
         assertThat(sent.getPkgLength(), equalTo(1L));
         assertThat(sent.getReqType(), equalTo(ReqType.ADD));

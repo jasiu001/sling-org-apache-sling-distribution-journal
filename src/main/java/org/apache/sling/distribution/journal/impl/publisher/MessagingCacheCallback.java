@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.apache.sling.distribution.journal.HandlerAdapter.create;
-
 import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +40,8 @@ import org.apache.sling.distribution.journal.shared.AgentId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.distribution.journal.HandlerAdapter.create;
+
 public class MessagingCacheCallback implements CacheCallback {
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -56,8 +56,8 @@ public class MessagingCacheCallback implements CacheCallback {
     private final Consumer<ClearCommand> commandSender;
 
     public MessagingCacheCallback(
-            MessagingProvider messagingProvider, 
-            String packageTopic, 
+            MessagingProvider messagingProvider,
+            String packageTopic,
             PublishMetrics publishMetrics,
             DiscoveryService discoveryService,
             Consumer<ClearCommand> commandSender) {
@@ -71,20 +71,21 @@ public class MessagingCacheCallback implements CacheCallback {
     @Override
     public Closeable createConsumer(MessageHandler<PackageMessage> handler) {
         log.info("Starting consumer");
-        QueueCacheSeeder seeder = new QueueCacheSeeder(messagingProvider.createSender(packageTopic)); //NOSONAR
-        Closeable poller = messagingProvider.createPoller( //NOSONAR
-                packageTopic,
-                Reset.latest,
-                create(PackageMessage.class, (info, message) -> { seeder.close(); handler.handle(info, message); }) 
-                ); 
+        QueueCacheSeeder seeder = new QueueCacheSeeder(messagingProvider.createSender(packageTopic)); // NOSONAR
+        Closeable poller = messagingProvider.createPoller( // NOSONAR
+                packageTopic, Reset.latest, create(PackageMessage.class, (info, message) -> {
+                    seeder.close();
+                    handler.handle(info, message);
+                }));
         seeder.startSeeding();
         return () -> IOUtils.closeQuietly(seeder, poller);
     }
-    
+
     @Override
     public List<FullMessage<PackageMessage>> fetchRange(long minOffset, long maxOffset) throws InterruptedException {
         publishMetrics.getQueueCacheFetchCount().increment();
-        return new RangePoller(messagingProvider, packageTopic, minOffset, maxOffset, RangePoller.DEFAULT_SEED_DELAY_SECONDS)
+        return new RangePoller(
+                        messagingProvider, packageTopic, minOffset, maxOffset, RangePoller.DEFAULT_SEED_DELAY_SECONDS)
                 .fetchRange();
     }
 
@@ -102,13 +103,13 @@ public class MessagingCacheCallback implements CacheCallback {
         int maxRetries = state.getMaxRetries();
         return new QueueState(curOffset, headRetries, maxRetries, clearCallback);
     }
-    
+
     @Override
     public State getState(String pubAgentName, String subAgentId) {
         TopologyView view = discoveryService.getTopologyView();
         return view.getState(subAgentId, pubAgentName);
     }
-    
+
     private void sendClearCommand(String pubAgentName, AgentId subAgentId, long offset) {
         ClearCommand command = ClearCommand.builder()
                 .pubAgentName(pubAgentName)

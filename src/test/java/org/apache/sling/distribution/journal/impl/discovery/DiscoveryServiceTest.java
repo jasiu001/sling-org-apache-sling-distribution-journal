@@ -18,12 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,31 +46,37 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class DiscoveryServiceTest {
 
     private static final String SUB1_SLING_ID = UUID.randomUUID().toString();
     private static final String SUB1_AGENT = "subagent";
     private static final String PUB1_AGENT_NAME = "pubagent1";
-    
+
     @Mock
     private Closeable poller;
-    
+
     @Mock
     BundleContext bundleContext;
 
     @Mock
     MessagingProvider clientProvider;
-    
+
     @Captor
     ArgumentCaptor<HandlerAdapter<DiscoveryMessage>> captureDiscoveryHandler;
-    
+
     @Captor
     ArgumentCaptor<HandlerAdapter<LogMessage>> captureLogHandler;
-    
+
     @Captor
     ArgumentCaptor<Event> captureEvent;
-    
+
     @Mock
     TopologyChangeHandler topologyChangeHandler;
 
@@ -85,34 +85,43 @@ public class DiscoveryServiceTest {
 
     private MessageHandler<DiscoveryMessage> discoveryHandler;
     private MessageHandler<LogMessage> logHandler;
-    
+
     private DiscoveryService discoveryService;
-    
+
     @Before
     public void before() {
         discoveryService = new DiscoveryService(clientProvider, topologyChangeHandler, eventAdmin);
         when(clientProvider.createPoller(
-                Mockito.anyString(), 
-                Mockito.any(Reset.class),
-                captureDiscoveryHandler.capture(), captureLogHandler.capture())).thenReturn(poller);
+                        Mockito.anyString(),
+                        Mockito.any(Reset.class),
+                        captureDiscoveryHandler.capture(),
+                        captureLogHandler.capture()))
+                .thenReturn(poller);
         discoveryService.activate(bundleContext);
         discoveryHandler = captureDiscoveryHandler.getValue().getHandler();
         logHandler = captureLogHandler.getValue().getHandler();
     }
-    
+
     @Test
     public void testDiscoveryEventChangesTopologyView() throws IOException {
-        String subAgentId = SUB1_SLING_ID + "-" + SUB1_AGENT; 
-        assertTrue(discoveryService.getTopologyView().getSubscriberAgentStates(subAgentId).isEmpty());
-        
-        DiscoveryMessage message = discoveryMessage(SUB1_SLING_ID, SUB1_AGENT,
-                subscriberState(PUB1_AGENT_NAME, 10));
+        String subAgentId = SUB1_SLING_ID + "-" + SUB1_AGENT;
+        assertTrue(discoveryService
+                .getTopologyView()
+                .getSubscriberAgentStates(subAgentId)
+                .isEmpty());
+
+        DiscoveryMessage message = discoveryMessage(SUB1_SLING_ID, SUB1_AGENT, subscriberState(PUB1_AGENT_NAME, 10));
         discoveryHandler.handle(messageInfo(0), message);
 
         discoveryService.run();
-        assertThat(discoveryService.getTopologyView().getState(subAgentId, PUB1_AGENT_NAME).getOffset(), equalTo(10L));
+        assertThat(
+                discoveryService
+                        .getTopologyView()
+                        .getState(subAgentId, PUB1_AGENT_NAME)
+                        .getOffset(),
+                equalTo(10L));
     }
-    
+
     @Test
     public void testReceivingLogMessageSendsOSGiEvent() {
         LogMessage logMessage = LogMessage.builder().build();
@@ -122,13 +131,13 @@ public class DiscoveryServiceTest {
         assertThat(event.getTopic(), equalTo(DiscoveryService.TOPIC_DISTRIBUTION_LOG));
         assertThat(event.getProperty(DiscoveryService.KEY_MESSAGE), equalTo(logMessage));
     }
-    
+
     @After
     public void after() throws IOException {
         discoveryService.deactivate();
         verify(poller).close();
     }
-    
+
     @Test
     public void testPurgeNonRespondingSubscriber() {
         // TODO If a subscriber does not respond after a certain timeout its offsets must be purged
@@ -142,17 +151,18 @@ public class DiscoveryServiceTest {
         return DiscoveryMessage.builder()
                 .subSlingId(subSlingId)
                 .subAgentName(subAgentName)
-                .subscriberConfiguration(SubscriberConfig
-                        .builder()
+                .subscriberConfiguration(SubscriberConfig.builder()
                         .editable(false)
                         .maxRetries(-1)
                         .build())
-                .subscriberStates(Arrays.asList(subStates)).build();
+                .subscriberStates(Arrays.asList(subStates))
+                .build();
     }
 
     private SubscriberState subscriberState(String pubAgentName, int offset) {
         return SubscriberState.builder()
                 .pubAgentName(pubAgentName)
-                .offset(offset).build();
+                .offset(offset)
+                .build();
     }
 }

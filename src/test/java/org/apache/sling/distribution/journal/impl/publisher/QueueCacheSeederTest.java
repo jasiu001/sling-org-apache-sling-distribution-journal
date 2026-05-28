@@ -18,11 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-
 import java.io.IOException;
 
 import org.apache.sling.distribution.journal.MessageSender;
@@ -36,6 +31,11 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class QueueCacheSeederTest {
@@ -58,7 +58,7 @@ public class QueueCacheSeederTest {
     @Test
     public void testSeeding() throws IOException {
         seeder.startSeeding();
-        
+
         verify(sender, timeout(1000)).send(any());
     }
 
@@ -66,5 +66,4 @@ public class QueueCacheSeederTest {
     public void after() {
         seeder.close();
     }
-
 }

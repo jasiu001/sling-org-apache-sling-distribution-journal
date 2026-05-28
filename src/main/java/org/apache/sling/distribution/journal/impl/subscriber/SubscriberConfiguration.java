@@ -22,7 +22,8 @@ import org.apache.sling.distribution.journal.bookkeeper.PackageHandling;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@ObjectClassDefinition(name = "Apache Sling Journal based Distribution - Sub Agent",
+@ObjectClassDefinition(
+        name = "Apache Sling Journal based Distribution - Sub Agent",
         description = "Apache Sling Content Distribution Sub agent")
 public @interface SubscriberConfiguration {
 
@@ -32,39 +33,57 @@ public @interface SubscriberConfiguration {
     @AttributeDefinition(name = "name", description = "The name of the agent")
     String name() default "";
 
-    @AttributeDefinition(name = "Agent Names",
-            description = "The SCD agent names to subscribe to.")
+    @AttributeDefinition(name = "Agent Names", description = "The SCD agent names to subscribe to.")
     String[] agentNames() default {""};
 
-    @AttributeDefinition(name = "DistributionPackageBuilder target",
-            description = "The target reference for the DistributionPackageBuilder used to build/install content packages, e.g. use target=(name=...) to bind to a service by name.")
+    @AttributeDefinition(
+            name = "DistributionPackageBuilder target",
+            description =
+                    "The target reference for the DistributionPackageBuilder used to build/install content packages, e.g. use target=(name=...) to bind to a service by name.")
     String packageBuilder_target() default "(name=journal_filevault)";
 
-    @AttributeDefinition(name = "Precondition target",
-            description = "The target reference for the Precondition used to validate packages, e.g. use target=(name=...) to bind to a service by name.")
+    @AttributeDefinition(
+            name = "Precondition target",
+            description =
+                    "The target reference for the Precondition used to validate packages, e.g. use target=(name=...) to bind to a service by name.")
     String precondition_target() default "(name=default)";
 
-    @AttributeDefinition(name = "editable", description = "True if the agent supports removal of items, false otherwise. Default is false.")
+    @AttributeDefinition(
+            name = "editable",
+            description = "True if the agent supports removal of items, false otherwise. Default is false.")
     boolean editable() default false;
 
-    @AttributeDefinition(name = "maxRetries", description = "The max number of attempts to import a package before moving the package to an error queue. If set to a negative value, the number of attempts is infinite. Default is -1 (infinite attempts).")
+    @AttributeDefinition(
+            name = "maxRetries",
+            description =
+                    "The max number of attempts to import a package before moving the package to an error queue. If set to a negative value, the number of attempts is infinite. Default is -1 (infinite attempts).")
     int maxRetries() default -1;
 
-    @AttributeDefinition(name = "packageHandling", description = "Defines if content packages in /etc/packages should be processed (Extract, Install, Off).")
+    @AttributeDefinition(
+            name = "packageHandling",
+            description = "Defines if content packages in /etc/packages should be processed (Extract, Install, Off).")
     PackageHandling packageHandling() default PackageHandling.Off;
-    
-    @AttributeDefinition(name = "subscriberIdleCheck", description = "Defines if we register a subscriber idle health check.")
+
+    @AttributeDefinition(
+            name = "subscriberIdleCheck",
+            description = "Defines if we register a subscriber idle health check.")
     boolean subscriberIdleCheck() default false;
 
-    @AttributeDefinition(name = "subscriberIdleTags", description = "Defines the health check tags that the subscriber idle health check should be registered for.")
+    @AttributeDefinition(
+            name = "subscriberIdleTags",
+            description =
+                    "Defines the health check tags that the subscriber idle health check should be registered for.")
     String[] subscriberIdleTags() default {};
 
-    @AttributeDefinition(name = "ContentPackageExtractor.overwritePrimaryTypesOfFolders", description = "The flag determines whether the primary node types of folders should be overwritten during content package extraction, with a default value of 'true'.")
+    @AttributeDefinition(
+            name = "ContentPackageExtractor.overwritePrimaryTypesOfFolders",
+            description =
+                    "The flag determines whether the primary node types of folders should be overwritten during content package extraction, with a default value of 'true'.")
     boolean contentPackageExtractorOverwritePrimaryTypesOfFolders() default true;
-    
+
     @AttributeDefinition(description = "Number of ms being idle before reporting ready.")
     int idleMillies() default 10 * 1000;
-    
+
     @AttributeDefinition(description = "Number of ms to force subscriber reporting idle.")
     int forceReadyMillies() default 300 * 1000;
 

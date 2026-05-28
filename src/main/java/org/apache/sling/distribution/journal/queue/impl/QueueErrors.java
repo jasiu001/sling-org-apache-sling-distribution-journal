@@ -34,7 +34,8 @@ import static org.osgi.service.event.EventConstants.EVENT_TOPIC;
 /**
  * Keeps track of the processing errors per sub agent.
  */
-@Component(service = { QueueErrors.class, EventHandler.class },
+@Component(
+        service = {QueueErrors.class, EventHandler.class},
         property = EVENT_TOPIC + "=" + TOPIC_DISTRIBUTION_LOG)
 public class QueueErrors implements EventHandler {
 
@@ -49,8 +50,7 @@ public class QueueErrors implements EventHandler {
      * @return a {@code Throwable} or {@code null} if the last processing attempt did not fail
      */
     public Throwable getError(String pubAgentName, String subAgentId) {
-        return errors.computeIfAbsent(pubAgentName, this::newPubAgent)
-                .get(subAgentId);
+        return errors.computeIfAbsent(pubAgentName, this::newPubAgent).get(subAgentId);
     }
 
     @Override
@@ -58,8 +58,7 @@ public class QueueErrors implements EventHandler {
         LogMessage msg = (LogMessage) event.getProperty(KEY_MESSAGE);
         if (msg != null) {
             String subAgentId = new AgentId(msg.getSubSlingId(), msg.getSubAgentName()).getAgentId();
-            errors.computeIfAbsent(msg.getPubAgentName(), this::newPubAgent)
-                    .put(subAgentId, toThrowable(msg));
+            errors.computeIfAbsent(msg.getPubAgentName(), this::newPubAgent).put(subAgentId, toThrowable(msg));
         }
     }
 
@@ -70,5 +69,4 @@ public class QueueErrors implements EventHandler {
     private Map<String, Throwable> newPubAgent(String pubAgentName) {
         return new ConcurrentHashMap<>();
     }
-
 }

@@ -18,12 +18,12 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 public class TopologyViewManager {
@@ -33,7 +33,7 @@ public class TopologyViewManager {
      */
     private final Map<String, State> states = new ConcurrentHashMap<>();
 
-    private volatile TopologyView currentView = new TopologyView(); //NOSONAR
+    private volatile TopologyView currentView = new TopologyView(); // NOSONAR
 
     private final long refreshTtl;
 
@@ -73,9 +73,8 @@ public class TopologyViewManager {
     }
 
     private TopologyView buildView(long now) {
-        Set<State> newStates = states.values().stream()
-                .filter(e -> isAlive(now, e))
-                .collect(Collectors.toSet());
+        Set<State> newStates =
+                states.values().stream().filter(e -> isAlive(now, e)).collect(Collectors.toSet());
         return new TopologyView(newStates);
     }
 
@@ -86,5 +85,4 @@ public class TopologyViewManager {
     private String stateId(State state) {
         return String.format("%s#%s", state.getSubAgentId(), state.getPubAgentName());
     }
-
 }

@@ -18,13 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.when;
-
 import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
 import org.apache.sling.testing.mock.osgi.MockOsgi;
@@ -35,6 +28,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SubscriberIdleCheckTest {
@@ -48,7 +48,7 @@ public class SubscriberIdleCheckTest {
     @Before
     public void before() {
         context = MockOsgi.newBundleContext();
-        idleCheck = new SubscriberIdleCheck(context, idle, new String[] { "systemready" } );
+        idleCheck = new SubscriberIdleCheck(context, idle, new String[] {"systemready"});
     }
 
     @Test

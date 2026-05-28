@@ -20,25 +20,26 @@ package org.apache.sling.distribution.journal.impl.publisher;
 
 import javax.annotation.Nonnull;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import org.apache.sling.distribution.DistributionRequestState;
 import org.apache.sling.distribution.DistributionResponse;
 import org.apache.sling.distribution.DistributionResponseInfo;
 import org.junit.Test;
 
-public class SimpleDistributionResponseTest {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+public class SimpleDistributionResponseTest {
 
     @Test
     public void testGetStateAndMessage() throws Exception {
         String msg = "some message";
         DistributionRequestState state = DistributionRequestState.ACCEPTED;
         DistributionResponseInfo info = new DistributionResponseInfo() {
-            @Nonnull @Override public String getId() {
+            @Nonnull
+            @Override
+            public String getId() {
                 return "res1";
             }
         };
@@ -48,7 +49,7 @@ public class SimpleDistributionResponseTest {
         assertNotNull(response.getDistributionInfo());
         assertEquals("res1", response.getDistributionInfo().getId());
     }
-    
+
     @Test
     public void testStates() {
         assertTrue(isSuccessFul(DistributionRequestState.DISTRIBUTED));
@@ -56,7 +57,7 @@ public class SimpleDistributionResponseTest {
         assertFalse(isSuccessFul(DistributionRequestState.DROPPED));
         assertFalse(isSuccessFul(DistributionRequestState.NOT_EXECUTED));
     }
-    
+
     @Test(expected = NullPointerException.class)
     public void nullDistributionResponse() {
         new SimpleDistributionResponse(DistributionRequestState.DISTRIBUTED, "success", null);
@@ -69,7 +70,7 @@ public class SimpleDistributionResponseTest {
         assertNotNull(response.getDistributionInfo());
         assertEquals("", response.getDistributionInfo().getId());
     }
-    
+
     private boolean isSuccessFul(DistributionRequestState state) {
         return new SimpleDistributionResponse(state, "").isSuccessful();
     }

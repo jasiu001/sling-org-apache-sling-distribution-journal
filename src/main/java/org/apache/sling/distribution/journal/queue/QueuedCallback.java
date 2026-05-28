@@ -26,5 +26,4 @@ import org.apache.sling.distribution.journal.messages.PackageMessage;
 public interface QueuedCallback {
 
     void queued(List<FullMessage<PackageMessage>> messages);
-
 }

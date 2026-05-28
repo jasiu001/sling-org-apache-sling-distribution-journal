@@ -18,6 +18,17 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.jackrabbit.vault.fs.api.IdConflictPolicy;
 import org.apache.jackrabbit.vault.fs.api.ImportMode;
 import org.apache.jackrabbit.vault.fs.io.AccessControlHandling;
@@ -38,16 +49,6 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 import org.slf4j.Logger;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
@@ -73,16 +74,14 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
 
     @Activate
     public JournalDistributionPackageBuilder(
-            Configuration config,
-            @Reference DistributionContentSerializerProvider serializerProvider) {
+            Configuration config, @Reference DistributionContentSerializerProvider serializerProvider) {
         type = config.name();
         ExportSettings exportSettings = new ExportSettings(
                 config.package_roots(),
                 config.package_filters(),
                 config.property_filters(),
                 config.useBinaryReferences(),
-                pathMappings(config.pathsMapping())
-        );
+                pathMappings(config.pathsMapping()));
         ImportSettings importSettings = new ImportSettings(
                 ImportMode.valueOf(config.importMode()),
                 AccessControlHandling.valueOf(config.aclHandling()),
@@ -90,8 +89,7 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
                 config.autoSaveThreshold(),
                 config.strictImport(),
                 config.overwritePrimaryTypesOfFolders(),
-                config.idConflictPolicy()
-        );
+                config.idConflictPolicy());
         contentSerializer = serializerProvider.build(config.name(), exportSettings, importSettings);
     }
 
@@ -101,8 +99,8 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
     }
 
     @Override
-    public @Nonnull DistributionPackage createPackage(@Nonnull ResourceResolver resourceResolver,
-                                                      @Nonnull DistributionRequest distributionRequest)
+    public @Nonnull DistributionPackage createPackage(
+            @Nonnull ResourceResolver resourceResolver, @Nonnull DistributionRequest distributionRequest)
             throws DistributionException {
 
         String packageId = format("dstrpck-%s-%s", currentTimeMillis(), randomUUID());
@@ -110,11 +108,13 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
         final byte[] data;
         if (distributionRequest.getRequestType() == DistributionRequestType.ADD) {
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                DistributionExportOptions distributionExportOptions = new DistributionExportOptions(distributionRequest, null /* Filters set on the serializer */);
+                DistributionExportOptions distributionExportOptions =
+                        new DistributionExportOptions(distributionRequest, null /* Filters set on the serializer */);
                 contentSerializer.exportToStream(resourceResolver, distributionExportOptions, outputStream);
                 data = outputStream.toByteArray();
             } catch (IOException e) {
-                throw new DistributionException("Failed to create package for paths: " + Arrays.toString(distributionRequest.getPaths()), e);
+                throw new DistributionException(
+                        "Failed to create package for paths: " + Arrays.toString(distributionRequest.getPaths()), e);
             }
         } else {
             data = new byte[0];
@@ -130,38 +130,40 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
 
     @Nonnull
     @Override
-    public DistributionPackage readPackage(@Nonnull ResourceResolver resourceResolver,
-                                           @Nonnull InputStream inputStream)
+    public DistributionPackage readPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull InputStream inputStream)
             throws DistributionException {
         throw new DistributionException("Unsupported Operation");
     }
 
     @Nullable
     @Override
-    public DistributionPackage getPackage(@Nonnull ResourceResolver resourceResolver,
-                                          @Nonnull String id)
+    public DistributionPackage getPackage(@Nonnull ResourceResolver resourceResolver, @Nonnull String id)
             throws DistributionException {
         throw new DistributionException("Unsupported Operation with id: " + id);
     }
 
     @Override
-    public boolean installPackage(@Nonnull ResourceResolver resourceResolver,
-                                  @Nonnull DistributionPackage distributionPackage)
+    public boolean installPackage(
+            @Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage)
             throws DistributionException {
         DistributionPackageInfo info = distributionPackage.getInfo();
         DistributionRequestType requestType = requireNonNull(info.getRequestType());
         switch (requestType) {
-            case ADD: installAddPackage(resourceResolver, distributionPackage); break;
-            case DELETE: installDeletePackage(resourceResolver, distributionPackage); break;
-            default: LOG.debug("Skip request type: {}", requestType);
+            case ADD:
+                installAddPackage(resourceResolver, distributionPackage);
+                break;
+            case DELETE:
+                installDeletePackage(resourceResolver, distributionPackage);
+                break;
+            default:
+                LOG.debug("Skip request type: {}", requestType);
         }
         return true;
     }
 
     @Override
-    public @Nonnull DistributionPackageInfo installPackage(@Nonnull ResourceResolver resourceResolver,
-                                                           @Nonnull InputStream inputStream)
-            throws DistributionException {
+    public @Nonnull DistributionPackageInfo installPackage(
+            @Nonnull ResourceResolver resourceResolver, @Nonnull InputStream inputStream) throws DistributionException {
         throw new DistributionException("Unsupported Operation");
     }
 
@@ -172,18 +174,19 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
                 .collect(toMap(chunks -> chunks[0], chunks -> chunks[1], (existing, replacement) -> replacement)));
     }
 
-    private void installAddPackage(@Nonnull ResourceResolver resourceResolver,
-                                   @Nonnull DistributionPackage distributionPackage)
+    private void installAddPackage(
+            @Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage)
             throws DistributionException {
         try (InputStream inputStream = distributionPackage.createInputStream()) {
             contentSerializer.importFromStream(resourceResolver, inputStream);
         } catch (IOException e) {
-            throw new DistributionException("Failed to install distribution package with id: " + distributionPackage.getId(), e);
+            throw new DistributionException(
+                    "Failed to install distribution package with id: " + distributionPackage.getId(), e);
         }
     }
 
-    private void installDeletePackage(@Nonnull ResourceResolver resourceResolver,
-                                      @Nonnull DistributionPackage distributionPackage)
+    private void installDeletePackage(
+            @Nonnull ResourceResolver resourceResolver, @Nonnull DistributionPackage distributionPackage)
             throws DistributionException {
         List<String> paths = asList(distributionPackage.getInfo().getPaths());
         LOG.info("Deleting paths {}", paths);
@@ -209,66 +212,72 @@ public class JournalDistributionPackageBuilder implements DistributionPackageBui
         return deepPaths.toArray(new String[0]);
     }
 
-    @ObjectClassDefinition(name = "Apache Sling Journal based Distribution - Package Builder Configuration",
+    @ObjectClassDefinition(
+            name = "Apache Sling Journal based Distribution - Package Builder Configuration",
             description = "Apache Sling Content Distribution Package Builder Configuration")
     public @interface Configuration {
 
         @AttributeDefinition
         String webconsole_configurationFactory_nameHint() default "Builder name: {name}";
 
-        @AttributeDefinition(name = "Name",
-                description = "The name of the package builder.")
+        @AttributeDefinition(name = "Name", description = "The name of the package builder.")
         String name() default "journal-distribution";
 
-        @AttributeDefinition(name = "Import Mode",
-                description = "The vlt import mode for created packages.")
+        @AttributeDefinition(name = "Import Mode", description = "The vlt import mode for created packages.")
         String importMode() default "REPLACE";
 
-        @AttributeDefinition(name = "Acl Handling",
-                description = "The vlt acl handling mode for created packages.")
+        @AttributeDefinition(name = "Acl Handling", description = "The vlt acl handling mode for created packages.")
         String aclHandling() default "MERGE_PRESERVE";
 
-        @AttributeDefinition(name = "Cug Handling",
-                description = "The vlt cug handling mode for created packages.")
+        @AttributeDefinition(name = "Cug Handling", description = "The vlt cug handling mode for created packages.")
         String cugHandling() default "OVERWRITE";
 
-        @AttributeDefinition(name = "Package Roots",
-                description = "The package roots to be used for created packages. (this is useful for assembling packages with an user that cannot read above the package root)")
+        @AttributeDefinition(
+                name = "Package Roots",
+                description =
+                        "The package roots to be used for created packages. (this is useful for assembling packages with an user that cannot read above the package root)")
         String[] package_roots() default {};
 
-        @AttributeDefinition(name = "Package Node Filters",
+        @AttributeDefinition(
+                name = "Package Node Filters",
                 description = "The package node path filters. Filter format: path|+include|-exclude")
         String[] package_filters() default {};
 
-        @AttributeDefinition(name = "Package Property Filters",
+        @AttributeDefinition(
+                name = "Package Property Filters",
                 description = "The package property path filters. Filter format: path|+include|-exclude")
         String[] property_filters() default {};
 
-        @AttributeDefinition(name = "Use Binary References",
+        @AttributeDefinition(
+                name = "Use Binary References",
                 description = "If activated, it avoids sending binaries in the distribution package.")
         boolean useBinaryReferences() default true;
 
-        @AttributeDefinition(name = "Autosave threshold",
+        @AttributeDefinition(
+                name = "Autosave threshold",
                 description = "The value after which autosave is triggered for intermediate changes.")
         int autoSaveThreshold() default 1000;
 
-        @AttributeDefinition(name = "Paths mapping",
-                description = "List of paths that require be mapped.The format is {sourcePattern}={destinationPattern}, e.g. /etc/(.*)=/var/$1/some or simply /data=/bak")
+        @AttributeDefinition(
+                name = "Paths mapping",
+                description =
+                        "List of paths that require be mapped.The format is {sourcePattern}={destinationPattern}, e.g. /etc/(.*)=/var/$1/some or simply /data=/bak")
         String[] pathsMapping() default {};
 
-
-        @AttributeDefinition(name = "Install a content package in a strict mode",
-                description = "Flag to mark an error response will be thrown, if a content package will incorrectly installed")
+        @AttributeDefinition(
+                name = "Install a content package in a strict mode",
+                description =
+                        "Flag to mark an error response will be thrown, if a content package will incorrectly installed")
         boolean strictImport() default true;
 
-
-        @AttributeDefinition(name = "Legacy Folder Primary Type Mode",
+        @AttributeDefinition(
+                name = "Legacy Folder Primary Type Mode",
                 description = "Whether to overwrite the primary type of folders during imports")
         boolean overwritePrimaryTypesOfFolders() default true;
 
-        @AttributeDefinition(name = "ID Conflict Policy",
+        @AttributeDefinition(
+                name = "ID Conflict Policy",
                 description = "Node id conflict policy to be used during import")
         IdConflictPolicy idConflictPolicy() default IdConflictPolicy.LEGACY;
-
     }
 }

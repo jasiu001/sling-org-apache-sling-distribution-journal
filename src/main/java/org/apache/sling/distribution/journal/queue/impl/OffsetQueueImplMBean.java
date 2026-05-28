@@ -20,6 +20,8 @@ package org.apache.sling.distribution.journal.queue.impl;
 
 public interface OffsetQueueImplMBean {
     long getHeadOffset();
+
     long getTailOffset();
+
     int getSize();
 }

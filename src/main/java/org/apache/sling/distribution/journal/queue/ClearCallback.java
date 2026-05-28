@@ -24,5 +24,4 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public interface ClearCallback {
 
     void clear(long offset);
-
 }

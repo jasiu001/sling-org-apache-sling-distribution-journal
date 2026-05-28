@@ -49,7 +49,7 @@ public class OnlyOnLeaderTest {
     private OnlyOnLeader onlyOnLeader;
 
     @Before
-    public void before () {
+    public void before() {
         when(context.registerService(eq(OnlyOnLeader.class), any(OnlyOnLeader.class), any()))
                 .thenReturn(reg);
     }

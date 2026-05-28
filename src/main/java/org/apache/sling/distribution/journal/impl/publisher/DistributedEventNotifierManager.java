@@ -18,6 +18,8 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
+import java.util.Hashtable;
+
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.commons.scheduler.Scheduler;
 import org.apache.sling.discovery.TopologyEvent;
@@ -37,19 +39,20 @@ import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-import java.util.Hashtable;
-
 import static org.apache.sling.commons.scheduler.Scheduler.*;
 import static org.apache.sling.discovery.TopologyEvent.Type;
 import static org.apache.sling.discovery.TopologyEvent.Type.*;
 
-@Component(immediate = true, service = {TopologyEventListener.class, Runnable.class}, property = {
-        PROPERTY_SCHEDULER_CONCURRENT + ":Boolean=false",
-        PROPERTY_SCHEDULER_IMMEDIATE + ":Boolean=true",
-        PROPERTY_SCHEDULER_PERIOD + ":Long=" + 60 * 10, // 10 minutes
-        Scheduler.PROPERTY_SCHEDULER_THREAD_POOL + ":String=content-distribution",
-        PROPERTY_SCHEDULER_RUN_ON + "=" +  VALUE_RUN_ON_LEADER
-})
+@Component(
+        immediate = true,
+        service = {TopologyEventListener.class, Runnable.class},
+        property = {
+            PROPERTY_SCHEDULER_CONCURRENT + ":Boolean=false",
+            PROPERTY_SCHEDULER_IMMEDIATE + ":Boolean=true",
+            PROPERTY_SCHEDULER_PERIOD + ":Long=" + 60 * 10, // 10 minutes
+            Scheduler.PROPERTY_SCHEDULER_THREAD_POOL + ":String=content-distribution",
+            PROPERTY_SCHEDULER_RUN_ON + "=" + VALUE_RUN_ON_LEADER
+        })
 @Designate(ocd = DistributedEventNotifierManager.Configuration.class)
 public class DistributedEventNotifierManager implements TopologyEventListener, Runnable {
 
@@ -61,12 +64,11 @@ public class DistributedEventNotifierManager implements TopologyEventListener, R
 
     private PackageDistributedNotifier notifier;
 
-
     /**
      * Register the package distributed event notifier service
      * on all or only the leader instance in a cluster according
      * to the configuration.
-     * 
+     *
      * The reference to distributedEventHandler should be pointed to a specific event handler via config.
      * This will guarantee that the event handler will not miss any events.
      */
@@ -78,12 +80,12 @@ public class DistributedEventNotifierManager implements TopologyEventListener, R
             @Reference PubQueueProvider pubQueueCacheService,
             @Reference MessagingProvider messagingProvider,
             @Reference ResourceResolverFactory resolverFactory,
-            @Reference EventHandler distributedEventHandler
-    ) {
+            @Reference EventHandler distributedEventHandler) {
         this.context = context;
         this.config = config;
-        this.notifier = new PackageDistributedNotifier(eventAdmin, pubQueueCacheService, messagingProvider, resolverFactory, config.ensureEvent());
-        if (! config.deduplicateEvent()) {
+        this.notifier = new PackageDistributedNotifier(
+                eventAdmin, pubQueueCacheService, messagingProvider, resolverFactory, config.ensureEvent());
+        if (!config.deduplicateEvent()) {
             registerService();
         }
     }
@@ -137,17 +139,22 @@ public class DistributedEventNotifierManager implements TopologyEventListener, R
         }
     }
 
-    @ObjectClassDefinition(name = "Apache Sling Journal based Distribution - Package Distributed Event Notifier Configuration",
+    @ObjectClassDefinition(
+            name = "Apache Sling Journal based Distribution - Package Distributed Event Notifier Configuration",
             description = "Apache Sling Content Distribution Package Distributed Event Notifier Configuration")
     public @interface Configuration {
 
-        @AttributeDefinition(name = "Deduplicate event",
-                description = "When true the distributed event will be sent only on one instance in the cluster. " +
-                        "When false the distributed event will be sent on all instances in the cluster. Default is false")
+        @AttributeDefinition(
+                name = "Deduplicate event",
+                description =
+                        "When true the distributed event will be sent only on one instance in the cluster. "
+                                + "When false the distributed event will be sent on all instances in the cluster. Default is false")
         boolean deduplicateEvent() default false;
 
-        @AttributeDefinition(name = "Ensure event",
-                description = "When true events will be sent from the last distributed event persisted in the repository. Default is false")
+        @AttributeDefinition(
+                name = "Ensure event",
+                description =
+                        "When true events will be sent from the last distributed event persisted in the repository. Default is false")
         boolean ensureEvent() default false;
     }
 }

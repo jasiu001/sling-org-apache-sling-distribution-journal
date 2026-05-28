@@ -18,13 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.Closeable;
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +53,13 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingCacheCallbackTest {
     private static final String SUBAGENT_NAME_1 = "subagent1";
@@ -71,27 +71,26 @@ public class MessagingCacheCallbackTest {
     private static final String PUB1AGENT1 = "agent1";
 
     private static final String SLINGID1 = UUID.randomUUID().toString();
-    private static final String SUBAGENT_ID1 = SLINGID1 +"-" + SUBAGENT_NAME_1;
-
+    private static final String SUBAGENT_ID1 = SLINGID1 + "-" + SUBAGENT_NAME_1;
 
     @Mock
     private MessagingProvider messagingProvider;
-    
+
     @Mock
     private JournalAvailable journalAvailable;
-    
+
     @Mock
     private PublishMetrics publishMetrics;
-    
+
     @Mock
     private MessageHandler<PackageMessage> handler;
 
     @Mock
     private MessageSender<Object> sender;
-    
+
     @Mock
     private DiscoveryService discovery;
-    
+
     @Mock
     private Counter counter;
 
@@ -100,14 +99,14 @@ public class MessagingCacheCallbackTest {
 
     @Captor
     private ArgumentCaptor<HandlerAdapter<PackageMessage>> handlerCaptor;
-    
+
     @Captor
     private ArgumentCaptor<ClearCommand> clearCommandCaptor;
-    
+
     @Before
     public void before() {
-        callback = new MessagingCacheCallback(messagingProvider, "package", 
-                publishMetrics, discovery, (command) -> sender.accept(command));
+        callback = new MessagingCacheCallback(
+                messagingProvider, "package", publishMetrics, discovery, (command) -> sender.accept(command));
     }
 
     @Test
@@ -115,7 +114,7 @@ public class MessagingCacheCallbackTest {
         when(messagingProvider.createSender(Mockito.any())).thenReturn(sender);
         Closeable poller = callback.createConsumer(handler);
         assertThat(poller, notNullValue());
-        
+
         poller.close();
     }
 
@@ -124,17 +123,15 @@ public class MessagingCacheCallbackTest {
         when(publishMetrics.getQueueCacheFetchCount()).thenReturn(counter);
         when(messagingProvider.assignTo(10L)).thenReturn("0:10");
         CompletableFuture<List<FullMessage<PackageMessage>>> result = CompletableFuture.supplyAsync(this::fetch);
-        verify(messagingProvider, timeout(1000)).createPoller(
-                Mockito.eq("package"), 
-                Mockito.eq(Reset.earliest), 
-                Mockito.eq("0:10"),
-                handlerCaptor.capture());
+        verify(messagingProvider, timeout(1000))
+                .createPoller(
+                        Mockito.eq("package"), Mockito.eq(Reset.earliest), Mockito.eq("0:10"), handlerCaptor.capture());
         simulateMessage(19);
         simulateMessage(20);
         List<FullMessage<PackageMessage>> messages = result.get(100, TimeUnit.SECONDS);
         assertThat(messages.size(), equalTo(1));
     }
-    
+
     @Test
     public void testGetSubscribedAgentIds() {
         TopologyView topology = createTopologyView();
@@ -143,20 +140,20 @@ public class MessagingCacheCallbackTest {
         assertThat(agentIds.size(), equalTo(1));
         assertThat(agentIds.iterator().next(), equalTo(SUBAGENT_ID1));
     }
-    
+
     @Test
     public void testGetQueueState() {
         TopologyView topology = createTopologyView();
         when(discovery.getTopologyView()).thenReturn(topology);
-        
+
         QueueState queueState = callback.getQueueState(PUB1AGENT1, SUBAGENT_ID1);
-        
+
         assertThat(queueState.getLastProcessedOffset(), equalTo(CURRENT_OFFSET));
         assertThat(queueState.getHeadRetries(), equalTo(HEAD_RETRIES));
         assertThat(queueState.getMaxRetries(), equalTo(MAX_RETRIES));
-        
+
         queueState.getClearCallback().clear(CLEAR_OFFSET);
-        
+
         verify(sender).accept(clearCommandCaptor.capture());
         ClearCommand clearCommand = clearCommandCaptor.getValue();
         assertThat(clearCommand.getOffset(), equalTo(CLEAR_OFFSET));
@@ -166,14 +163,14 @@ public class MessagingCacheCallbackTest {
     }
 
     private TopologyView createTopologyView() {
-        State state = new State(PUB1AGENT1, SUBAGENT_ID1, 0, 
-                CURRENT_OFFSET, HEAD_RETRIES, MAX_RETRIES, true);
+        State state = new State(PUB1AGENT1, SUBAGENT_ID1, 0, CURRENT_OFFSET, HEAD_RETRIES, MAX_RETRIES, true);
         return new TopologyView(Collections.singleton(state));
     }
 
     private void simulateMessage(int offset) {
         MessageInfo info = new TestMessageInfo("", 0, offset, System.currentTimeMillis());
-        FullMessage<PackageMessage> message = new FullMessage<PackageMessage>(info, RangePollerTest.createMessage(ReqType.ADD, offset));
+        FullMessage<PackageMessage> message =
+                new FullMessage<PackageMessage>(info, RangePollerTest.createMessage(ReqType.ADD, offset));
         handlerCaptor.getValue().getHandler().handle(message.getInfo(), message.getMessage());
     }
 
@@ -184,5 +181,4 @@ public class MessagingCacheCallbackTest {
             throw new IllegalStateException();
         }
     }
-
 }

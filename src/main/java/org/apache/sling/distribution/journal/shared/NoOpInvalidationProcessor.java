@@ -18,18 +18,14 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
+import java.util.Map;
+
 import org.apache.sling.distribution.InvalidationProcessException;
 import org.apache.sling.distribution.InvalidationProcessor;
 import org.osgi.service.component.annotations.Component;
 
-import java.util.Map;
-
-@Component(
-    property = {
-        "type=default"
-    }
-)
+@Component(property = {"type=default"})
 public class NoOpInvalidationProcessor implements InvalidationProcessor {
-        @Override
-        public void process(Map<String, Object> props) throws InvalidationProcessException {}
+    @Override
+    public void process(Map<String, Object> props) throws InvalidationProcessException {}
 }

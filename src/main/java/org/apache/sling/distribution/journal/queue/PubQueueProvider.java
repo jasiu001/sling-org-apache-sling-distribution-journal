@@ -18,12 +18,12 @@
  */
 package org.apache.sling.distribution.journal.queue;
 
-import java.io.Closeable;
-import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import java.io.Closeable;
+import java.util.Set;
 
 import org.apache.sling.distribution.journal.MessageInfo;
 import org.apache.sling.distribution.journal.impl.publisher.PackageQueuedNotifier;
@@ -48,7 +48,7 @@ public interface PubQueueProvider extends Closeable {
 
     @Nullable
     DistributionQueue getQueue(String pubAgentName, String queueName);
-    
+
     /**
      * Maximum backlog depth for a subscriber cohort (min {@code lastProcessedOffset} in cohort, then journal tail size).
      *
@@ -87,5 +87,4 @@ public interface PubQueueProvider extends Closeable {
 
     @Nonnull
     PackageQueuedNotifier getQueuedNotifier();
-
 }

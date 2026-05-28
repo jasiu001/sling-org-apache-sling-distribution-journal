@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,6 +29,8 @@ import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A DistributionSubscriber is considered ready when one of the conditions is met:
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SubscriberReady implements IdleCheck {
     public static final int MAX_RETRIES = 10;
-    
+
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final String subAgentName;
@@ -59,28 +59,35 @@ public class SubscriberReady implements IdleCheck {
     private ScheduledFuture<?> schedule;
     private final ScheduledFuture<?> forceShedule;
 
-	private final BiConsumer<ReadyReason, Duration> readyCallback;
+    private final BiConsumer<ReadyReason, Duration> readyCallback;
 
-    public SubscriberReady(String subAgentName, long idleMillis, long forceIdleMillies, long acceptableAgeDiffMs, AtomicBoolean readyHolder, Supplier<Long> timeProvider, BiConsumer<ReadyReason, Duration> readyCallback) {
+    public SubscriberReady(
+            String subAgentName,
+            long idleMillis,
+            long forceIdleMillies,
+            long acceptableAgeDiffMs,
+            AtomicBoolean readyHolder,
+            Supplier<Long> timeProvider,
+            BiConsumer<ReadyReason, Duration> readyCallback) {
         this.subAgentName = subAgentName;
         this.idleMillis = idleMillis;
         this.forceIdleMillies = forceIdleMillies;
         this.acceptableAgeDiffMs = acceptableAgeDiffMs;
         this.isReady = readyHolder;
         this.timeProvider = timeProvider;
-		this.readyCallback = readyCallback;
+        this.readyCallback = readyCallback;
         this.startTime = timeProvider.get();
         executor = Executors.newScheduledThreadPool(2);
         forceShedule = executor.schedule(this::forceIdle, forceIdleMillies, TimeUnit.MILLISECONDS);
         idle();
         log.info("Started");
     }
-    
+
     @Override
     public boolean isReady() {
         return isReady.get();
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -91,7 +98,11 @@ public class SubscriberReady implements IdleCheck {
         cancelSchedule();
         long latency = timeProvider.get() - messageCreateTime;
         if (latency < acceptableAgeDiffMs) {
-            ready(ReadyReason.LATENCY, String.format("Package message latency %d s < %d s acceptable limit", MILLISECONDS.toSeconds(latency), MILLISECONDS.toSeconds(acceptableAgeDiffMs)));
+            ready(
+                    ReadyReason.LATENCY,
+                    String.format(
+                            "Package message latency %d s < %d s acceptable limit",
+                            MILLISECONDS.toSeconds(latency), MILLISECONDS.toSeconds(acceptableAgeDiffMs)));
         }
         if (retries > MAX_RETRIES) {
             ready(ReadyReason.MAX_RETRIES, String.format("Retries %d > %d", retries, MAX_RETRIES));
@@ -110,12 +121,12 @@ public class SubscriberReady implements IdleCheck {
             schedule = executor.schedule(this::idleReady, idleMillis, MILLISECONDS);
         }
     }
-    
+
     private void forceIdle() {
         ready(ReadyReason.FORCE, String.format("Forcing ready after %d s", MILLISECONDS.toSeconds(forceIdleMillies)));
         cancelSchedule();
     }
-    
+
     private void cancelSchedule() {
         if (schedule != null) {
             schedule.cancel(false);
@@ -123,14 +134,21 @@ public class SubscriberReady implements IdleCheck {
     }
 
     private void idleReady() {
-        ready(ReadyReason.IDLE, String.format("%s ready after being idle for > %d s", subAgentName, MILLISECONDS.toSeconds(idleMillis)));
+        ready(
+                ReadyReason.IDLE,
+                String.format(
+                        "%s ready after being idle for > %d s", subAgentName, MILLISECONDS.toSeconds(idleMillis)));
     }
-    
+
     private void ready(IdleCheck.ReadyReason reason, String reasonSt) {
         long readyTime = timeProvider.get();
         long timeToIdle = MILLISECONDS.toSeconds(readyTime - startTime);
         readyCallback.accept(reason, Duration.ofMillis(timeToIdle));
-        log.info("Subscriber becoming ready after timeToIdle={} s. Reason={}, Details='{}'.", timeToIdle, reason, reasonSt);
+        log.info(
+                "Subscriber becoming ready after timeToIdle={} s. Reason={}, Details='{}'.",
+                timeToIdle,
+                reason,
+                reasonSt);
         isReady.set(true);
         cancelSchedule();
         forceShedule.cancel(false);
@@ -142,5 +160,4 @@ public class SubscriberReady implements IdleCheck {
         cancelSchedule();
         executor.shutdownNow();
     }
-
 }

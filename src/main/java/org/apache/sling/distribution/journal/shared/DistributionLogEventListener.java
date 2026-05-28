@@ -38,13 +38,14 @@ import org.osgi.service.event.EventHandler;
  * given DefaultDistributionLog
  */
 public class DistributionLogEventListener implements EventHandler, Closeable {
-    private static final String[] TOPICS = new String [] {DiscoveryService.TOPIC_DISTRIBUTION_LOG, DistributionEventTopics.AGENT_PACKAGE_DISTRIBUTED};
+    private static final String[] TOPICS =
+            new String[] {DiscoveryService.TOPIC_DISTRIBUTION_LOG, DistributionEventTopics.AGENT_PACKAGE_DISTRIBUTED};
     private final String pubAgentName;
     private final ServiceRegistration<EventHandler> reg;
     private final DefaultDistributionLog log;
-    
+
     private static final String MESSAGE_AND_STACKTRACE = "Message: {},\nStacktrace: {}";
-    
+
     public DistributionLogEventListener(BundleContext context, DefaultDistributionLog log, String pubAgentName) {
         this.log = log;
         this.pubAgentName = pubAgentName;
@@ -74,19 +75,19 @@ public class DistributionLogEventListener implements EventHandler, Closeable {
     }
 
     private void handleDistributedEvent(Event event) {
-        String agentName = (String)event.getProperty(DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME);
+        String agentName = (String) event.getProperty(DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME);
         if (!pubAgentName.equals(agentName)) {
             return;
         }
-        String[] paths = (String[])event.getProperty(DistributionEventProperties.DISTRIBUTION_PATHS);
-        String type = (String)event.getProperty(DistributionEventProperties.DISTRIBUTION_TYPE);
-        String packageId = (String)event.getProperty(DistributionEvent.PACKAGE_ID);
+        String[] paths = (String[]) event.getProperty(DistributionEventProperties.DISTRIBUTION_PATHS);
+        String type = (String) event.getProperty(DistributionEventProperties.DISTRIBUTION_TYPE);
+        String packageId = (String) event.getProperty(DistributionEvent.PACKAGE_ID);
         log.info("Successfully applied package with id {}, type {}, paths {}", packageId, type, paths);
     }
 
     @Override
     public void close() {
-        if (reg!= null) {
+        if (reg != null) {
             reg.unregister();
         }
     }

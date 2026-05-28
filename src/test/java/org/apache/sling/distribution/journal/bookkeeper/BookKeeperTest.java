@@ -18,16 +18,6 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.Collections.singletonList;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.time.Duration;
 import java.util.Date;
 import java.util.UUID;
@@ -60,6 +50,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.osgi.service.event.EventAdmin;
 
+import static java.lang.System.currentTimeMillis;
+import static java.util.Collections.singletonList;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class BookKeeperTest {
 
@@ -70,7 +70,7 @@ public class BookKeeperTest {
     private ResourceResolverFactory resolverFactory = new MockResourceResolverFactory();
 
     private SubscriberMetrics subscriberMetrics;
-    
+
     private OsgiContext context = new OsgiContext();
 
     @Mock
@@ -92,7 +92,7 @@ public class BookKeeperTest {
 
     @Mock
     private ImportPreProcessor importPreProcessor;
-    
+
     @Mock
     private ImportPostProcessor importPostProcessor;
 
@@ -104,9 +104,11 @@ public class BookKeeperTest {
     @Before
     public void before() {
         metricsService = context.registerInjectActivateService(MetricsServiceImpl.class);
-        BookKeeperConfig bkConfig = new BookKeeperConfig("subAgentName", "subSlingId", true, 10, PackageHandling.Extract, "package", "command", true);
-        subscriberMetrics = new SubscriberMetrics(metricsService, bkConfig.getSubAgentName(), "publish", bkConfig.isEditable());
-		bookKeeper = new BookKeeper(
+        BookKeeperConfig bkConfig = new BookKeeperConfig(
+                "subAgentName", "subSlingId", true, 10, PackageHandling.Extract, "package", "command", true);
+        subscriberMetrics =
+                new SubscriberMetrics(metricsService, bkConfig.getSubAgentName(), "publish", bkConfig.isEditable());
+        bookKeeper = new BookKeeper(
                 resolverFactory,
                 subscriberMetrics,
                 packageHandler,
@@ -120,7 +122,8 @@ public class BookKeeperTest {
     }
 
     @Test
-    public void testOnlyEveryTenthSkippedPackageOffsetStored() throws InterruptedException, PersistenceException, LoginException {
+    public void testOnlyEveryTenthSkippedPackageOffsetStored()
+            throws InterruptedException, PersistenceException, LoginException {
         for (int c = 0; c < COMMIT_AFTER_NUM_SKIPPED; c++) {
             bookKeeper.skipPackage(c);
             assertThat(bookKeeper.loadOffset(), equalTo(-1L));
@@ -139,107 +142,113 @@ public class BookKeeperTest {
     public void testPackageImport() throws DistributionException {
         try {
             Date createdTime = new Date(currentTimeMillis());
-			bookKeeper.importPackage(buildPackageMessage(PackageMessage.ReqType.ADD), 10, createdTime, createdTime);
+            bookKeeper.importPackage(buildPackageMessage(PackageMessage.ReqType.ADD), 10, createdTime, createdTime);
         } finally {
             assertThat(bookKeeper.getRetries(PUB_AGENT_NAME), equalTo(0));
         }
     }
-    
+
     @Test
     public void testPackageBlockingImportErrorMetric() throws DistributionException, PersistenceException {
-        doThrow(IllegalStateException.class) 
-            .when(packageHandler).apply(Mockito.any(ResourceResolver.class), Mockito.any(PackageMessage.class));
+        doThrow(IllegalStateException.class)
+                .when(packageHandler)
+                .apply(Mockito.any(ResourceResolver.class), Mockito.any(PackageMessage.class));
         Counter counter = subscriberMetrics.getBlockingImportErrors();
         assertThat(counter.getCount(), equalTo(0L));
-        
-        for (int c=0; c< BookKeeper.NUM_ERRORS_BLOCKING + 1; c++) {
+
+        for (int c = 0; c < BookKeeper.NUM_ERRORS_BLOCKING + 1; c++) {
             try {
                 Date createdTime = new Date(currentTimeMillis());
                 bookKeeper.importPackage(buildPackageMessage(PackageMessage.ReqType.ADD), 10, createdTime, createdTime);
             } catch (DistributionException e) {
             }
         }
-        
+
         assertThat(counter.getCount(), equalTo(1L));
     }
-    
+
     @Test
     public void testPackageImportFailCurrentDuration() throws DistributionException, PersistenceException {
         assertThat(subscriberMetrics.getCurrentImportDuration(), equalTo(0L));
         doAnswer(new Answer<Void>() {
 
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                long duration = subscriberMetrics.getCurrentImportDuration();
-                if (duration < Duration.ofMinutes(6).toMillis()) {
-                    throw new IllegalStateException("Should get valid duration");
-                }
-                return null;
-            }
-            
-        }).when(packageHandler).apply(Mockito.any(ResourceResolver.class), Mockito.any(PackageMessage.class));
-        
-        Date simulatedStartTime = new Date( currentTimeMillis() - Duration.ofMinutes(6).toMillis( ));
-        bookKeeper.importPackage(buildPackageMessage(PackageMessage.ReqType.ADD), 10, simulatedStartTime, simulatedStartTime);
-        
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        long duration = subscriberMetrics.getCurrentImportDuration();
+                        if (duration < Duration.ofMinutes(6).toMillis()) {
+                            throw new IllegalStateException("Should get valid duration");
+                        }
+                        return null;
+                    }
+                })
+                .when(packageHandler)
+                .apply(Mockito.any(ResourceResolver.class), Mockito.any(PackageMessage.class));
+
+        Date simulatedStartTime =
+                new Date(currentTimeMillis() - Duration.ofMinutes(6).toMillis());
+        bookKeeper.importPackage(
+                buildPackageMessage(PackageMessage.ReqType.ADD), 10, simulatedStartTime, simulatedStartTime);
+
         assertThat(subscriberMetrics.getCurrentImportDuration(), equalTo(0L));
     }
-    
+
     @Test
     public void testPackageImportCurrentDuration() throws DistributionException, PersistenceException {
         assertThat(subscriberMetrics.getCurrentImportDuration(), equalTo(0L));
         doAnswer(new Answer<Void>() {
 
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Long duration = subscriberMetrics.getCurrentImportDuration();
-                if (duration < Duration.ofMinutes(1).toMillis()) {
-                    throw new IllegalStateException("Should get valid duration");
-                }
-                return null;
-            }
-            
-        }).when(packageHandler).apply(Mockito.any(ResourceResolver.class), Mockito.any(PackageMessage.class));
-        
-        Date simulatedStartTime = new Date( currentTimeMillis() - Duration.ofMinutes(1).toMillis());
-        bookKeeper.importPackage(buildPackageMessage(PackageMessage.ReqType.ADD), 10, new Date(currentTimeMillis()), simulatedStartTime);
-        
+                    @Override
+                    public Void answer(InvocationOnMock invocation) throws Throwable {
+                        Long duration = subscriberMetrics.getCurrentImportDuration();
+                        if (duration < Duration.ofMinutes(1).toMillis()) {
+                            throw new IllegalStateException("Should get valid duration");
+                        }
+                        return null;
+                    }
+                })
+                .when(packageHandler)
+                .apply(Mockito.any(ResourceResolver.class), Mockito.any(PackageMessage.class));
+
+        Date simulatedStartTime =
+                new Date(currentTimeMillis() - Duration.ofMinutes(1).toMillis());
+        bookKeeper.importPackage(
+                buildPackageMessage(PackageMessage.ReqType.ADD), 10, new Date(currentTimeMillis()), simulatedStartTime);
+
         assertThat(subscriberMetrics.getCurrentImportDuration(), equalTo(0L));
     }
 
     @Test
     public void testCacheInvalidation() throws DistributionException {
         try {
-        	Date simulatedStartTime = new Date( currentTimeMillis() - Duration.ofMinutes(1).toMillis());
-            bookKeeper.invalidateCache(buildPackageMessage(PackageMessage.ReqType.INVALIDATE), 10L, simulatedStartTime, simulatedStartTime);
+            Date simulatedStartTime =
+                    new Date(currentTimeMillis() - Duration.ofMinutes(1).toMillis());
+            bookKeeper.invalidateCache(
+                    buildPackageMessage(PackageMessage.ReqType.INVALIDATE),
+                    10L,
+                    simulatedStartTime,
+                    simulatedStartTime);
         } finally {
             assertThat(bookKeeper.getRetries(PUB_AGENT_NAME), equalTo(0));
         }
     }
-    
+
     @Test
     public void testClearOffsetHandling() {
-    	Long offset = bookKeeper.getClearOffset();
-    	assertThat("Should be null", offset, nullValue());
-    	long newOffset = 1000;
-    	bookKeeper.storeClearOffset(newOffset);
-    	Long offset2 = bookKeeper.getClearOffset();
-    	assertThat("Should be null", offset2, equalTo(newOffset));
+        Long offset = bookKeeper.getClearOffset();
+        assertThat("Should be null", offset, nullValue());
+        long newOffset = 1000;
+        bookKeeper.storeClearOffset(newOffset);
+        Long offset2 = bookKeeper.getClearOffset();
+        assertThat("Should be null", offset2, equalTo(newOffset));
     }
 
     PackageMessage buildPackageMessage(PackageMessage.ReqType reqType) {
         PackageMessage msg = mock(PackageMessage.class);
-        when(msg.getPkgLength())
-                .thenReturn(100L);
-        when(msg.getPubAgentName())
-                .thenReturn(PUB_AGENT_NAME);
-        when(msg.getReqType())
-                .thenReturn(reqType);
-        when(msg.getPaths())
-                .thenReturn(singletonList("/content"));
-        when(msg.getPkgId())
-                .thenReturn(UUID.randomUUID().toString());
+        when(msg.getPkgLength()).thenReturn(100L);
+        when(msg.getPubAgentName()).thenReturn(PUB_AGENT_NAME);
+        when(msg.getReqType()).thenReturn(reqType);
+        when(msg.getPaths()).thenReturn(singletonList("/content"));
+        when(msg.getPkgId()).thenReturn(UUID.randomUUID().toString());
         return msg;
     }
-
 }

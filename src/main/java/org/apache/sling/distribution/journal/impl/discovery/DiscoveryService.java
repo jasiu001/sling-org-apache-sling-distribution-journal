@@ -18,17 +18,12 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
-import static java.lang.String.format;
-import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_CONCURRENT;
-import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_PERIOD;
-import static org.apache.sling.distribution.journal.HandlerAdapter.create;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.io.Closeable;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.commons.scheduler.Scheduler;
@@ -55,6 +50,11 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
+import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_CONCURRENT;
+import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_PERIOD;
+import static org.apache.sling.distribution.journal.HandlerAdapter.create;
 
 /**
  * Listens for discovery messages and tracks presence of Subscribers as well as
@@ -83,25 +83,21 @@ public class DiscoveryService implements Runnable {
     private MessagingProvider messagingProvider;
 
     @Reference(policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
-    private volatile TopologyChangeHandler topologyChangeHandler; //NOSONAR
+    private volatile TopologyChangeHandler topologyChangeHandler; // NOSONAR
 
     @Reference
     private EventAdmin eventAdmin;
 
-    private volatile ServiceRegistration<?> reg; //NOSONAR
+    private volatile ServiceRegistration<?> reg; // NOSONAR
 
     private final TopologyViewManager viewManager = new TopologyViewManager(REFRESH_TTL_MS);
 
     private Closeable poller;
 
-
-    public DiscoveryService() {
-    }
+    public DiscoveryService() {}
 
     public DiscoveryService(
-            MessagingProvider messagingProvider,
-            TopologyChangeHandler topologyChangeHandler,
-            EventAdmin eventAdmin) {
+            MessagingProvider messagingProvider, TopologyChangeHandler topologyChangeHandler, EventAdmin eventAdmin) {
         this.messagingProvider = messagingProvider;
         this.topologyChangeHandler = topologyChangeHandler;
         this.eventAdmin = eventAdmin;
@@ -110,11 +106,10 @@ public class DiscoveryService implements Runnable {
     @Activate
     public void activate(BundleContext context) {
         poller = messagingProvider.createPoller(
-                Topics.DISCOVERY_TOPIC, 
+                Topics.DISCOVERY_TOPIC,
                 Reset.latest,
                 create(DiscoveryMessage.class, this::handleDiscovery),
-                create(LogMessage.class, this::handleLog)
-                ); 
+                create(LogMessage.class, this::handleLog));
         startTopologyViewUpdaterTask(context);
         LOG.info("Discovery service started");
     }
@@ -131,7 +126,7 @@ public class DiscoveryService implements Runnable {
     public TopologyView getTopologyView() {
         return viewManager.getCurrentView();
     }
-    
+
     public int getSubscriberCount(String pubAgentName) {
         return getTopologyView().getSubscribedAgentIds(pubAgentName).size();
     }
@@ -145,7 +140,7 @@ public class DiscoveryService implements Runnable {
     }
 
     private void handleChanges(TopologyView newView, TopologyView oldView) {
-        if (! newView.equals(oldView)) {
+        if (!newView.equals(oldView)) {
             String msg = format("TopologyView changed from %s to %s", oldView, newView);
             TopologyViewDiff diffView = new TopologyViewDiff(oldView, newView);
             if (diffView.subscribedAgentsChanged()) {
@@ -175,18 +170,25 @@ public class DiscoveryService implements Runnable {
         AgentId subAgentId = new AgentId(disMsg.getSubSlingId(), disMsg.getSubAgentName());
         for (SubscriberState subStateMsg : disMsg.getSubscriberStates()) {
             SubscriberConfig subConfig = disMsg.getSubscriberConfiguration();
-            State subState = new State(subStateMsg.getPubAgentName(), subAgentId.getAgentId(), now, subStateMsg.getOffset(), subStateMsg.getRetries(), subConfig.getMaxRetries(), subConfig.isEditable());
+            State subState = new State(
+                    subStateMsg.getPubAgentName(),
+                    subAgentId.getAgentId(),
+                    now,
+                    subStateMsg.getOffset(),
+                    subStateMsg.getRetries(),
+                    subConfig.getMaxRetries(),
+                    subConfig.isEditable());
             LOG.debug("Updating subscriber state={}", subState);
             viewManager.refreshState(subState);
         }
     }
-    
+
     public void handleLog(MessageInfo info, LogMessage logMsg) {
         /*
-         * We only have one DiscoveryService but possibly more than one DistributionPublisher. 
+         * We only have one DiscoveryService but possibly more than one DistributionPublisher.
          * So we send an event for each log message and let them listen to these.
          */
-        Event event = new Event(TOPIC_DISTRIBUTION_LOG, Collections.singletonMap(KEY_MESSAGE, logMsg)); 
+        Event event = new Event(TOPIC_DISTRIBUTION_LOG, Collections.singletonMap(KEY_MESSAGE, logMsg));
         eventAdmin.postEvent(event);
     }
 }

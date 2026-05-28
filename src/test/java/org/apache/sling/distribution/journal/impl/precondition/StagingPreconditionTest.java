@@ -18,11 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.precondition;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.io.Closeable;
 import java.util.concurrent.TimeoutException;
 
@@ -43,6 +38,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class StagingPreconditionTest {
 
@@ -69,16 +69,13 @@ public class StagingPreconditionTest {
         Awaitility.setDefaultPollInterval(Duration.ONE_HUNDRED_MILLISECONDS);
         MockitoAnnotations.openMocks(this).close();
 
-        when(clientProvider.createPoller(
-                Mockito.anyString(),
-                Mockito.eq(Reset.earliest),
-                statusCaptor.capture()))
+        when(clientProvider.createPoller(Mockito.anyString(), Mockito.eq(Reset.earliest), statusCaptor.capture()))
                 .thenReturn(mock(Closeable.class));
 
         precondition.activate();
         statusHandler = statusCaptor.getValue().getHandler();
     }
-    
+
     @Test
     public void testNotYetProcessed() throws InterruptedException, TimeoutException {
         simulateMessage(OTHER_AGENT, 1002, PackageStatusMessage.Status.IMPORTED);
@@ -87,22 +84,21 @@ public class StagingPreconditionTest {
 
         Decision res2 = precondition.canProcess(GP_SUB1_AGENT_NAME, OFFSET_NOT_PRESENT);
         assertThat(res2, equalTo(Decision.WAIT));
-
     }
-    
+
     @Test
     public void testCleanup() throws InterruptedException, TimeoutException {
         simulateMessage(GP_SUB1_AGENT_NAME, 1002, PackageStatusMessage.Status.IMPORTED);
         Decision res = precondition.canProcess(GP_SUB1_AGENT_NAME, 1002);
         assertThat(res, equalTo(Decision.ACCEPT));
-        
+
         // Cleanup
         precondition.run();
-        
+
         Decision res2 = precondition.canProcess(GP_SUB1_AGENT_NAME, 1002);
         assertThat(res2, equalTo(Decision.WAIT));
     }
-    
+
     @Test
     public void testStatus() throws InterruptedException, TimeoutException {
         simulateMessage(GP_SUB1_AGENT_NAME, 1000, PackageStatusMessage.Status.REMOVED_FAILED);
@@ -122,7 +118,7 @@ public class StagingPreconditionTest {
                 .offset(pkgOffset)
                 .status(status)
                 .build();
-        
+
         TestMessageInfo offset0 = new TestMessageInfo("", 1, 0, 0);
         statusHandler.handle(offset0, message);
     }

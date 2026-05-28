@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * Normally PubQueueProvider should be created per publish agent.
- * For compatibility with current code and to save on number of consumers 
+ * For compatibility with current code and to save on number of consumers
  * we must make sure to publish only one for the messaging based impl.
  */
 @Component
@@ -64,20 +64,15 @@ public class PubQueueProviderPublisher {
         PublishMetrics publishMetrics = new PublishMetrics(metricsService, "");
         Consumer<ClearCommand> commandSender = messagingProvider.createSender(Topics.COMMAND_TOPIC);
         CacheCallback callback = new MessagingCacheCallback(
-                messagingProvider, 
-                Topics.PACKAGE_TOPIC, 
-                publishMetrics,
-                discoveryService,
-                commandSender);
+                messagingProvider, Topics.PACKAGE_TOPIC, publishMetrics, discoveryService, commandSender);
         this.pubQueueProvider = pubQueueProviderFactory.create(callback);
         this.statusPoller = messagingProvider.createPoller(
                 Topics.STATUS_TOPIC,
                 Reset.earliest,
-                HandlerAdapter.create(PackageStatusMessage.class, pubQueueProvider::handleStatus)
-                );
+                HandlerAdapter.create(PackageStatusMessage.class, pubQueueProvider::handleStatus));
         reg = context.registerService(PubQueueProvider.class, this.pubQueueProvider, new Hashtable<>());
     }
-    
+
     @Deactivate
     public void deactivate() {
         IOUtils.closeQuietly(this.statusPoller, this.pubQueueProvider);

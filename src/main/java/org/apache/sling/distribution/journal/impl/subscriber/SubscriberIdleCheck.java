@@ -18,6 +18,8 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
+import javax.annotation.Nullable;
+
 import java.io.Closeable;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -26,8 +28,6 @@ import org.apache.felix.hc.api.HealthCheck;
 import org.apache.felix.hc.api.Result;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
-
-import javax.annotation.Nullable;
 
 public class SubscriberIdleCheck implements HealthCheck, Closeable {
     static final String CHECK_NAME = "DistributionSubscriber idle";

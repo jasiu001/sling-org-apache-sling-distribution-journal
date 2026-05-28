@@ -32,5 +32,4 @@ public interface Tag extends Comparable<Tag> {
     default int compareTo(Tag o) {
         return getKey().compareTo(o.getKey());
     }
-
 }

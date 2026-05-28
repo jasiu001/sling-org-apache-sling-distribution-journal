@@ -18,19 +18,15 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
-import static org.apache.jackrabbit.vault.fs.api.IdConflictPolicy.LEGACY;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import javax.annotation.Nullable;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.jackrabbit.vault.fs.io.ImportOptions;
@@ -44,6 +40,10 @@ import org.apache.sling.distribution.common.DistributionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static org.apache.jackrabbit.vault.fs.api.IdConflictPolicy.LEGACY;
+
 /**
  * Hook that can be added to a DistributionPackageBuilder.
  * Each distribution package is inspected for possible content packages in /etc/packages.
@@ -56,7 +56,7 @@ class ContentPackageExtractor {
 
     private final Packaging packageService;
     private final SubscriberMetrics subscriberMetrics;
-    
+
     private final PackageHandling packageHandling;
     private final boolean overwritePrimaryTypesOfFolders;
 
@@ -66,7 +66,7 @@ class ContentPackageExtractor {
             PackageHandling packageHandling,
             boolean overwritePrimaryTypesOfFolders) {
         this.packageService = packageService;
-		this.subscriberMetrics = subscriberMetrics;
+        this.subscriberMetrics = subscriberMetrics;
         this.packageHandling = packageHandling;
         this.overwritePrimaryTypesOfFolders = overwritePrimaryTypesOfFolders;
     }
@@ -79,7 +79,7 @@ class ContentPackageExtractor {
         log.debug("Scanning imported nodes for packages to install.");
         for (String path : paths) {
             if (isContentPackagePath(path)) {
-                handlePath(resourceResolver,path);
+                handlePath(resourceResolver, path);
             }
         }
     }
@@ -96,7 +96,8 @@ class ContentPackageExtractor {
                 log.warn("Imported node {} does not exist. Skipping.", path);
             }
         } catch (Exception e) {
-            throw new DistributionException(format("Error trying to extract package at path %s because of '%s'", path, e.getMessage()), e);
+            throw new DistributionException(
+                    format("Error trying to extract package at path %s because of '%s'", path, e.getMessage()), e);
         }
     }
 
@@ -105,7 +106,7 @@ class ContentPackageExtractor {
     }
 
     private boolean isContentPackage(Node node) throws RepositoryException {
-        return node!= null && node.isNodeType(NodeType.NT_FILE);
+        return node != null && node.isNodeType(NodeType.NT_FILE);
     }
 
     private void installPackage(String path, Node node) throws RepositoryException, PackageException, IOException {
@@ -128,7 +129,8 @@ class ContentPackageExtractor {
         log.info("Content package at {} installed in durationMS={}", path, durationMS);
     }
 
-    private void installPackage(JcrPackage pack, ErrorListener listener) throws RepositoryException, PackageException, IOException {
+    private void installPackage(JcrPackage pack, ErrorListener listener)
+            throws RepositoryException, PackageException, IOException {
         ImportOptions opts = new ImportOptions();
         opts.setIdConflictPolicy(LEGACY);
         opts.setOverwritePrimaryTypesOfFolders(this.overwritePrimaryTypesOfFolders);
@@ -148,5 +150,4 @@ class ContentPackageExtractor {
             throw e;
         }
     }
-
 }

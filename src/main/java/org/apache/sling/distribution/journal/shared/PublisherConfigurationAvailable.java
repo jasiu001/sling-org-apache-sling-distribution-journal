@@ -42,15 +42,14 @@ import org.slf4j.LoggerFactory;
  */
 @Component(
         immediate = true,
-        property = { Constants.SERVICE_PID + "=" + DistributionPublisher.FACTORY_PID}
-)
+        property = {Constants.SERVICE_PID + "=" + DistributionPublisher.FACTORY_PID})
 public class PublisherConfigurationAvailable implements ManagedServiceFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(PublisherConfigurationAvailable.class);
 
-    private volatile ServiceRegistration<PublisherConfigurationAvailable> reg; //NOSONAR
+    private volatile ServiceRegistration<PublisherConfigurationAvailable> reg; // NOSONAR
 
-    private volatile BundleContext context; //NOSONAR
+    private volatile BundleContext context; // NOSONAR
 
     private final Object lock = new Object();
 

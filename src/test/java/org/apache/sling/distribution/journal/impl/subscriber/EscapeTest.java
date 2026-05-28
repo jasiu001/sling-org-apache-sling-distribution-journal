@@ -18,13 +18,13 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class EscapeTest {
 

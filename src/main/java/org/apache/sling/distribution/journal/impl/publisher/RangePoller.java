@@ -18,7 +18,7 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.apache.sling.distribution.journal.HandlerAdapter.create;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -26,18 +26,17 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.sling.distribution.journal.FullMessage;
 import org.apache.sling.distribution.journal.MessageInfo;
 import org.apache.sling.distribution.journal.MessageSender;
 import org.apache.sling.distribution.journal.MessagingProvider;
 import org.apache.sling.distribution.journal.Reset;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.apache.sling.distribution.journal.HandlerAdapter.create;
 
 @ParametersAreNonnullByDefault
 public class RangePoller {
@@ -59,14 +58,15 @@ public class RangePoller {
 
     private final MessageSender<PackageMessage> sender;
 
-	private final long startTime;
+    private final long startTime;
 
-    public RangePoller(MessagingProvider messagingProvider,
-                          String packageTopic,
-                          long minOffset,
-                          long maxOffsetExclusive,
-                          int seedDelaySeconds) {
-    	this.startTime = System.currentTimeMillis();
+    public RangePoller(
+            MessagingProvider messagingProvider,
+            String packageTopic,
+            long minOffset,
+            long maxOffsetExclusive,
+            int seedDelaySeconds) {
+        this.startTime = System.currentTimeMillis();
         this.maxOffset = maxOffsetExclusive;
         this.minOffset = minOffset;
         this.seedDelaySeconds = seedDelaySeconds;
@@ -75,15 +75,15 @@ public class RangePoller {
         LOG.info("Fetching offsets [{},{}[", minOffset, maxOffsetExclusive);
         sender = messagingProvider.createSender(packageTopic);
         headPoller = messagingProvider.createPoller(
-                packageTopic, Reset.earliest, assign,
-                create(PackageMessage.class, this::handlePackage)
-                );
+                packageTopic, Reset.earliest, assign, create(PackageMessage.class, this::handlePackage));
     }
 
     public List<FullMessage<PackageMessage>> fetchRange() throws InterruptedException {
         try {
             if (!fetched.await(seedDelaySeconds, TimeUnit.SECONDS)) {
-                LOG.warn("Unable to find a message with offset >= maxOffset={}. Sending single seeding message.", maxOffset);
+                LOG.warn(
+                        "Unable to find a message with offset >= maxOffset={}. Sending single seeding message.",
+                        maxOffset);
                 PackageMessage msg = QueueCacheSeeder.createTestMessage();
                 sender.send(msg);
                 fetched.await();
@@ -107,7 +107,7 @@ public class RangePoller {
             fetched.countDown();
         }
     }
-    
+
     private boolean isNotTestMessage(PackageMessage message) {
         return message.getReqType() != PackageMessage.ReqType.TEST;
     }

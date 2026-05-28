@@ -18,11 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -31,16 +26,24 @@ import java.util.stream.LongStream;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 public class TopologyViewDiffTest {
 
     @Test
     public void testGetProcessedOffsetsNoChange() throws Exception {
         Assert.assertTrue(new TopologyViewDiff(buildView(buildState(-1)), buildView(buildState(-1)))
-                .getProcessedOffsets().isEmpty());
+                .getProcessedOffsets()
+                .isEmpty());
         Assert.assertTrue(new TopologyViewDiff(buildView(buildState(0)), buildView(buildState(0)))
-                .getProcessedOffsets().isEmpty());
+                .getProcessedOffsets()
+                .isEmpty());
         Assert.assertTrue(new TopologyViewDiff(buildView(buildState(100)), buildView(buildState(100)))
-                .getProcessedOffsets().isEmpty());
+                .getProcessedOffsets()
+                .isEmpty());
     }
 
     @Test
@@ -90,14 +93,12 @@ public class TopologyViewDiffTest {
         TopologyView view1 = buildView(
                 new State("pub1", "sub1", 0, 10, 0, -1, false),
                 new State("pub1", "sub2", 0, 5, 0, -1, false),
-                new State("pub2", "sub1", 0, 100, 0, -1, false)
-        );
+                new State("pub2", "sub1", 0, 100, 0, -1, false));
 
         TopologyView view2 = buildView(
                 new State("pub1", "sub1", 0, 10, 0, -1, false),
                 // sub2 no longer in the view
-                new State("pub2", "sub1", 0, 100, 0, -1, false)
-        );
+                new State("pub2", "sub1", 0, 100, 0, -1, false));
 
         TopologyViewDiff viewDiff1 = new TopologyViewDiff(view1, view1);
         assertFalse(viewDiff1.subscribedAgentsChanged());
@@ -120,8 +121,7 @@ public class TopologyViewDiffTest {
                 new State("pub2", "sub1", 0, 100, 0, -1, false),
                 new State("pub2", "sub3", 0, 200, 0, -1, false),
                 new State("pub3", "sub2", 0, 300, 0, -1, false),
-                new State("pub3", "sub4", 0, 250, 0, -1, false)
-        );
+                new State("pub3", "sub4", 0, 250, 0, -1, false));
 
         TopologyView view2 = buildView(
                 // sub1 and sub2 not in the view anymore
@@ -129,8 +129,7 @@ public class TopologyViewDiffTest {
                 new State("pub2", "sub3", 0, 1200, 0, -1, false),
                 new State("pub3", "sub4", 0, 1250, 0, -1, false),
                 new State("pub4", "sub3", 0, 1500, 0, -1, false),
-                new State("pub4", "sub4", 0, 1550, 0, -1, false)
-        );
+                new State("pub4", "sub4", 0, 1550, 0, -1, false));
 
         TopologyViewDiff viewDiff = new TopologyViewDiff(view1, view2);
         Map<String, Supplier<LongStream>> processedOffset = viewDiff.getProcessedOffsets();
@@ -142,22 +141,20 @@ public class TopologyViewDiffTest {
 
         // check the offset stream fot pub2
         assertEquals(101, viewDiff.getProcessedOffsets().get("pub2").get().min().getAsLong());
-        assertEquals(1200, viewDiff.getProcessedOffsets().get("pub2").get().max().getAsLong());
+        assertEquals(
+                1200, viewDiff.getProcessedOffsets().get("pub2").get().max().getAsLong());
 
         // check the offset stream fot pub3
         assertEquals(251, viewDiff.getProcessedOffsets().get("pub3").get().min().getAsLong());
-        assertEquals(1250, viewDiff.getProcessedOffsets().get("pub3").get().max().getAsLong());
+        assertEquals(
+                1250, viewDiff.getProcessedOffsets().get("pub3").get().max().getAsLong());
     }
 
     @Test
     public void testGetProcessedOffsetsWrongOrder() throws Exception {
-        TopologyView view1 = buildView(
-                new State("pub1", "sub1", 0, 10, 0, -1, false)
-        );
+        TopologyView view1 = buildView(new State("pub1", "sub1", 0, 10, 0, -1, false));
 
-        TopologyView view2 = buildView(
-                new State("pub1", "sub1", 0, 5, 0, -1, false)
-        );
+        TopologyView view2 = buildView(new State("pub1", "sub1", 0, 5, 0, -1, false));
 
         TopologyViewDiff viewDiff = new TopologyViewDiff(view1, view2);
         Map<String, Supplier<LongStream>> processedOffset = viewDiff.getProcessedOffsets();
@@ -172,7 +169,7 @@ public class TopologyViewDiffTest {
         assertEquals(0, processedOffset.size());
     }
 
-    private TopologyView buildView(State ... state) {
+    private TopologyView buildView(State... state) {
         return new TopologyView(new HashSet<>(asList(state)));
     }
 

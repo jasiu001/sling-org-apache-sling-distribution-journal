@@ -18,14 +18,11 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static java.util.Collections.singletonMap;
-import static org.apache.sling.api.resource.ResourceResolverFactory.SUBSERVICE;
+import javax.management.NotCompliantMBeanException;
+import javax.management.StandardMBean;
 
 import java.io.IOException;
 import java.util.Objects;
-
-import javax.management.NotCompliantMBeanException;
-import javax.management.StandardMBean;
 
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
@@ -41,16 +38,17 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component(
-    immediate = true
-)
+import static java.util.Collections.singletonMap;
+import static org.apache.sling.api.resource.ResourceResolverFactory.SUBSERVICE;
+
+@Component(immediate = true)
 public class LocalStoreJMX implements LocalStoreJMXMBean {
-    
+
     Logger log = LoggerFactory.getLogger(this.getClass());
-    
+
     @Reference
     private ResourceResolverFactory resolverFactory;
-    
+
     private JMXRegistration jmxRegistration;
 
     @Activate
@@ -59,7 +57,7 @@ public class LocalStoreJMX implements LocalStoreJMXMBean {
         StandardMBean mbean = new StandardMBean(this, LocalStoreJMXMBean.class);
         jmxRegistration = new JMXRegistration(mbean, "offsetReset", "default");
     }
-    
+
     @Deactivate
     public void close() throws IOException {
         jmxRegistration.close();
@@ -70,7 +68,8 @@ public class LocalStoreJMX implements LocalStoreJMXMBean {
         String path = LocalStore.ROOT_PATH;
         try (ResourceResolver resolver = getBookKeeperServiceResolver()) {
             Resource rootResource = Objects.requireNonNull(resolver.getResource(path), path + " not found");
-            // We must not delete the root Resource as it is provisioned by the feature. So we delete the children instead
+            // We must not delete the root Resource as it is provisioned by the feature. So we delete the children
+            // instead
             Iterable<Resource> children = resolver.getChildren(rootResource);
             children.forEach(res -> delete(resolver, res));
             resolver.commit();
@@ -78,7 +77,7 @@ public class LocalStoreJMX implements LocalStoreJMXMBean {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
-    
+
     private void delete(ResourceResolver resolver, Resource resource) {
         try {
             log.info("Deleting store {}", resource.getPath());
@@ -87,7 +86,7 @@ public class LocalStoreJMX implements LocalStoreJMXMBean {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
-    
+
     private ResourceResolver getBookKeeperServiceResolver() throws LoginException {
         return resolverFactory.getServiceResourceResolver(singletonMap(SUBSERVICE, "bookkeeper"));
     }

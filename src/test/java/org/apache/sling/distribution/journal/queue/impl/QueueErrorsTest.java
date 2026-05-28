@@ -38,7 +38,7 @@ public class QueueErrorsTest {
     private QueueErrors queueErrors;
 
     @Before
-    public void before () {
+    public void before() {
         queueErrors = new QueueErrors();
     }
 
@@ -49,8 +49,7 @@ public class QueueErrorsTest {
 
     @Test
     public void testKeepTrackPerPubAgent() {
-        String
-                pubAgentName = "pubName",
+        String pubAgentName = "pubName",
                 subAgentName = "subName",
                 subSlingId = UUID.randomUUID().toString(),
                 subAgentId = new AgentId(subSlingId, subAgentName).getAgentId(),
@@ -75,5 +74,4 @@ public class QueueErrorsTest {
         props.put("message", msg);
         return new Event(TOPIC_DISTRIBUTION_LOG, props);
     }
-
 }

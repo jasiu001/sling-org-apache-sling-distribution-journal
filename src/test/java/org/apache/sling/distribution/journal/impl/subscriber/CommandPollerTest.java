@@ -18,11 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -45,6 +40,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 public class CommandPollerTest {
 
     private static final String SUB_AGENT_NAME = "subAgentName";
@@ -57,18 +57,18 @@ public class CommandPollerTest {
 
     @Mock
     private Closeable poller;
-    
+
     @Mock
     MessagingProvider clientProvider;
 
     @Mock
     Consumer<Long> callback;
-    
+
     CommandPoller commandPoller;
-    
+
     @Captor
     private ArgumentCaptor<HandlerAdapter<ClearCommand>> handlerCaptor;
-    
+
     private MessageHandler<ClearCommand> commandHandler;
 
     private MessageInfo info;
@@ -84,37 +84,37 @@ public class CommandPollerTest {
     @Test
     public void testSkipped() throws DistributionException, InterruptedException, IOException {
         createCommandPoller();
-        
+
         commandHandler.handle(info, commandMessage(SUBSLING_ID_OTHER, SUB_AGENT_OTHER, 1L));
         assertSkipped();
 
         commandHandler.handle(info, commandMessage(SUBSLING_ID_OTHER, SUB_AGENT_NAME, 1L));
         assertSkipped();
-        
+
         commandHandler.handle(info, commandMessage(SUB_SLING_ID, SUB_AGENT_OTHER, 1L));
         assertSkipped();
-        
+
         commandPoller.close();
-        
+
         verify(poller).close();
     }
-    
+
     @Test
     public void testClearOffsets() throws DistributionException, InterruptedException, IOException {
         createCommandPoller();
 
         commandHandler.handle(info, commandMessage(10L));
         assertClearedUpTo(10);
-        
+
         commandHandler.handle(info, commandMessage(11L));
         assertClearedUpTo(11);
 
         // Clearing lower offset should not change cleared offset
         commandHandler.handle(info, commandMessage(1L));
         assertClearedUpTo(11);
-        
+
         commandPoller.close();
-        
+
         verify(poller).close();
     }
 
@@ -126,11 +126,10 @@ public class CommandPollerTest {
     }
 
     private void assertClearedUpTo(int max) {
-        for (int c=0; c<=max; c++) { 
+        for (int c = 0; c <= max; c++) {
             assertThat(commandPoller.isCleared(c), equalTo(true));
         }
-        assertThat(commandPoller.isCleared(max+1), equalTo(false));
-
+        assertThat(commandPoller.isCleared(max + 1), equalTo(false));
     }
 
     private void assertSkipped() {
@@ -140,7 +139,7 @@ public class CommandPollerTest {
     private ClearCommand commandMessage(long offset) {
         return commandMessage(SUB_SLING_ID, SUB_AGENT_NAME, offset);
     }
-    
+
     private ClearCommand commandMessage(String subSlingId, String subAgentName, long offset) {
         return ClearCommand.builder()
                 .subAgentName(subAgentName)
@@ -150,13 +149,9 @@ public class CommandPollerTest {
     }
 
     private void createCommandPoller() {
-        when(clientProvider.createPoller(
-                Mockito.anyString(),
-                Mockito.eq(Reset.earliest), 
-                handlerCaptor.capture()))
-            .thenReturn(poller);
+        when(clientProvider.createPoller(Mockito.anyString(), Mockito.eq(Reset.earliest), handlerCaptor.capture()))
+                .thenReturn(poller);
         commandPoller = new CommandPoller(clientProvider, SUB_SLING_ID, SUB_AGENT_NAME, 0L, callback);
         commandHandler = handlerCaptor.getValue().getHandler();
     }
-
 }

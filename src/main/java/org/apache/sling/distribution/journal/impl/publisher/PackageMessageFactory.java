@@ -18,17 +18,14 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static java.lang.String.format;
-import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +47,9 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
+import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS;
 
 @Component(service = PackageMessageFactory.class)
 @Designate(ocd = PackageFactoryConfiguration.class)
@@ -88,18 +88,30 @@ public class PackageMessageFactory {
             ResourceResolver resourceResolver,
             String pubAgentName,
             DistributionRequest request)
-                    throws DistributionException {
+            throws DistributionException {
         switch (request.getRequestType()) {
-            case ADD: return create(ReqType.ADD, packageBuilder, resourceResolver, pubAgentName, request);
-            case DELETE: return create(ReqType.DELETE, packageBuilder, resourceResolver, pubAgentName, request);
-            case INVALIDATE: return createInvalidate(packageBuilder, resourceResolver, request, pubAgentName);
-            case TEST: return createTest(packageBuilder, resourceResolver, request, pubAgentName);
-            default: throw new IllegalArgumentException(format("Unsupported request with requestType=%s", request.getRequestType()));
+            case ADD:
+                return create(ReqType.ADD, packageBuilder, resourceResolver, pubAgentName, request);
+            case DELETE:
+                return create(ReqType.DELETE, packageBuilder, resourceResolver, pubAgentName, request);
+            case INVALIDATE:
+                return createInvalidate(packageBuilder, resourceResolver, request, pubAgentName);
+            case TEST:
+                return createTest(packageBuilder, resourceResolver, request, pubAgentName);
+            default:
+                throw new IllegalArgumentException(
+                        format("Unsupported request with requestType=%s", request.getRequestType()));
         }
     }
 
     @Nullable
-    private PackageMessage create(ReqType type, DistributionPackageBuilder packageBuilder, ResourceResolver resourceResolver, String pubAgentName, DistributionRequest request) throws DistributionException {
+    private PackageMessage create(
+            ReqType type,
+            DistributionPackageBuilder packageBuilder,
+            ResourceResolver resourceResolver,
+            String pubAgentName,
+            DistributionRequest request)
+            throws DistributionException {
         final DistributionPackage disPkg = packageBuilder.createPackage(resourceResolver, request);
 
         if (disPkg == null) {
@@ -126,7 +138,7 @@ public class PackageMessageFactory {
             // a delete package may not contain any data
             String storeRef;
             try {
-                storeRef =  binaryStore.put(pkgId, disPkg.createInputStream(), pkgLength);
+                storeRef = binaryStore.put(pkgId, disPkg.createInputStream(), pkgLength);
             } catch (IOException e) {
                 throw new DistributionException(e.getMessage(), e);
             }
@@ -139,13 +151,17 @@ public class PackageMessageFactory {
         }
 
         PackageMessage pipePackage = pkgBuilder.build();
-        
+
         disPkg.delete();
         return pipePackage;
     }
 
     @Nonnull
-    private PackageMessage createInvalidate(DistributionPackageBuilder packageBuilder, ResourceResolver resourceResolver, DistributionRequest request, String pubAgentName) {
+    private PackageMessage createInvalidate(
+            DistributionPackageBuilder packageBuilder,
+            ResourceResolver resourceResolver,
+            DistributionRequest request,
+            String pubAgentName) {
         String pkgId = UUID.randomUUID().toString();
         return PackageMessage.builder()
                 .pubSlingId(pubSlingId)
@@ -159,7 +175,11 @@ public class PackageMessageFactory {
     }
 
     @Nonnull
-    public PackageMessage createTest(DistributionPackageBuilder packageBuilder, ResourceResolver resourceResolver, DistributionRequest request, String pubAgentName) {
+    public PackageMessage createTest(
+            DistributionPackageBuilder packageBuilder,
+            ResourceResolver resourceResolver,
+            DistributionRequest request,
+            String pubAgentName) {
         String pkgId = UUID.randomUUID().toString();
         return PackageMessage.builder()
                 .pubSlingId(pubSlingId)
@@ -187,9 +207,9 @@ public class PackageMessageFactory {
              * To ensure that Apache Oak can import binary-less content packages
              * in an atomic save operation, we limit their supported size.
              */
-            throw new DistributionException(format("Can't distribute package with size greater than %s Byte, actual %s", maxPackageSize, pkgLength));
+            throw new DistributionException(format(
+                    "Can't distribute package with size greater than %s Byte, actual %s", maxPackageSize, pkgLength));
         }
         return pkgLength;
     }
-
 }

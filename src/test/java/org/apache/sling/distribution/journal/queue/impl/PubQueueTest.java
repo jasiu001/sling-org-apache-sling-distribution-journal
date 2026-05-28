@@ -18,17 +18,6 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_OFFSET;
-import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_PARTITION;
-import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_TIMESTAMP;
-import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_TOPIC;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,6 +38,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_OFFSET;
+import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_PARTITION;
+import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_TIMESTAMP;
+import static org.apache.sling.distribution.journal.queue.QueueItemFactory.RECORD_TOPIC;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 @SuppressWarnings("serial")
 public class PubQueueTest {
     private static final String TOPIC = "topic";
@@ -61,25 +61,25 @@ public class PubQueueTest {
     private OffsetQueue<DistributionQueueItem> offsetQueue;
 
     @Before
-    public void before () {
+    public void before() {
         offsetQueue = new OffsetQueueImpl<>();
     }
 
     @Test
     public void testGetName() throws Exception {
-    	PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
+        PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         assertEquals(QUEUE_NAME, queue.getName());
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testAdd() throws Exception {
-    	PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
+        PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         queue.add(queueItem(1));
     }
-    
+
     @Test
     public void testGetHeadEmpty() throws Exception {
-    	PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
+        PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         assertNull(queue.getHead());
     }
 
@@ -87,7 +87,7 @@ public class PubQueueTest {
     public void testGetHead() throws Exception {
         addEntries();
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
-        
+
         DistributionQueueEntry headEntry = queue.getHead();
 
         assertNotNull(headEntry);
@@ -99,7 +99,7 @@ public class PubQueueTest {
         addEntries();
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         Iterator<DistributionQueueEntry> entries = queue.getEntries(1, 2).iterator();
-        
+
         assertNotNull(entries);
         DistributionQueueEntry entry1 = entries.next();
         assertNotNull(entry1);
@@ -110,7 +110,7 @@ public class PubQueueTest {
 
     @Test
     public void testGetItemWithIllegalArgument() {
-    	PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
+        PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         assertNull(queue.getEntry("illegal"));
         assertNull(queue.getEntry("illegal@argument"));
     }
@@ -122,7 +122,7 @@ public class PubQueueTest {
         DistributionQueueStatus status = queue.getStatus();
         assertThat(status.getState(), Matchers.equalTo(DistributionQueueState.BLOCKED));
     }
-    
+
     @Test
     public void testNotBlocked() throws Exception {
         addEntries();
@@ -130,17 +130,16 @@ public class PubQueueTest {
         DistributionQueueStatus status = queue.getStatus();
         assertThat(status.getState(), Matchers.equalTo(DistributionQueueState.RUNNING));
     }
-    
+
     @Test
     public void testGetItem() throws Exception {
         addEntries();
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         String entryId = TOPIC + "-" + PARTITION + "@" + 200;
         DistributionQueueEntry queueEntry = queue.getEntry(entryId);
-        
+
         assertNotNull(queueEntry);
         assertEquals(packageId(2), queueEntry.getItem().getPackageId());
-        
     }
 
     @Test
@@ -149,7 +148,7 @@ public class PubQueueTest {
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         String headEntryId = EntryUtil.entryId(offsetQueue.getHeadItem());
         DistributionQueueEntry removed = queue.remove(headEntryId);
-        
+
         assertClearCallbackInvoked();
         assertEquals(headEntryId, removed.getId());
     }
@@ -169,8 +168,9 @@ public class PubQueueTest {
         String headEntryId = EntryUtil.entryId(offsetQueue.getHeadItem());
         String randomEntryId = EntryUtil.entryId(offsetQueue.getItem(offset(2)));
 
-        Iterator<DistributionQueueEntry> removed = queue.remove(Collections.singleton(randomEntryId)).iterator();
-        
+        Iterator<DistributionQueueEntry> removed =
+                queue.remove(Collections.singleton(randomEntryId)).iterator();
+
         assertClearCallbackInvoked();
         assertEquals(headEntryId, removed.next().getId());
         assertEquals(randomEntryId, removed.next().getId());
@@ -182,7 +182,7 @@ public class PubQueueTest {
         addEntries();
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         Iterable<DistributionQueueEntry> removed = queue.remove(Collections.singleton("nonexisting-0@99999"));
-        
+
         assertFalse(removed.iterator().hasNext());
     }
 
@@ -191,7 +191,7 @@ public class PubQueueTest {
         addEntries();
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         Iterable<DistributionQueueEntry> removed = queue.clear(-1);
-        
+
         assertClearCallbackInvoked();
         assertEquals(3, streamOf(removed).count());
         assertEquals(offset(3), lastClearOffset);
@@ -202,7 +202,7 @@ public class PubQueueTest {
         addEntries();
         PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         Iterable<DistributionQueueEntry> removed = queue.clear(2);
-        
+
         assertClearCallbackInvoked();
         assertEquals(2, streamOf(removed).count());
         assertEquals(offset(2), lastClearOffset);
@@ -210,7 +210,7 @@ public class PubQueueTest {
 
     @Test
     public void testGetType() throws Exception {
-    	PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
+        PubQueue queue = new PubQueue(QUEUE_NAME, offsetQueue, 0, null, this::clearCallback);
         assertEquals(DistributionQueueType.ORDERED, queue.getType());
     }
 
@@ -225,19 +225,21 @@ public class PubQueueTest {
     }
 
     private DistributionQueueItem queueItem(int nr) {
-        HashMap<String, Object> data = new HashMap<String, Object>(){{
-            put(RECORD_TOPIC, TOPIC);
-            put(RECORD_PARTITION, PARTITION);
-            put(RECORD_OFFSET, offset(nr));
-            put(RECORD_TIMESTAMP, 1541538150580L + nr * 2);
-        }};
+        HashMap<String, Object> data = new HashMap<String, Object>() {
+            {
+                put(RECORD_TOPIC, TOPIC);
+                put(RECORD_PARTITION, PARTITION);
+                put(RECORD_OFFSET, offset(nr));
+                put(RECORD_TIMESTAMP, 1541538150580L + nr * 2);
+            }
+        };
         return new DistributionQueueItem(packageId(nr), data);
     }
 
     private long offset(int nr) {
         return nr * 100;
     }
-    
+
     private static String packageId(int nr) {
         return PACKAGE_ID_PREFIX + Integer.valueOf(nr).toString();
     }
@@ -248,7 +250,7 @@ public class PubQueueTest {
 
     private void clearCallback(long offset) {
         log.info("Clearcallback with offset {}", offset);
-        lastClearOffset = offset; 
+        lastClearOffset = offset;
         invoked.release();
     }
 }

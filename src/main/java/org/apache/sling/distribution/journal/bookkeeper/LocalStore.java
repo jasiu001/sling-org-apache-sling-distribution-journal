@@ -18,6 +18,15 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
@@ -29,15 +38,6 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -57,16 +57,14 @@ public class LocalStore {
 
     private final String rootPath;
 
-    public LocalStore(ResourceResolverFactory resolverFactory, String storeType,
-                       String storeId) {
+    public LocalStore(ResourceResolverFactory resolverFactory, String storeType, String storeId) {
         this.resolverFactory = Objects.requireNonNull(resolverFactory);
         this.rootPath = String.format("%s/%s", ROOT_PATH, Objects.requireNonNull(storeType));
         this.storeId = Objects.requireNonNull(storeId);
         createParent();
     }
 
-    public synchronized void store(String key, Object value)
-            throws PersistenceException {
+    public synchronized void store(String key, Object value) throws PersistenceException {
         try (ResourceResolver resolver = requireNonNull(getBookKeeperServiceResolver())) {
             store(resolver, key, value);
             resolver.commit();
@@ -80,7 +78,8 @@ public class LocalStore {
         store(serviceResolver, Collections.singletonMap(key, value));
     }
 
-    public synchronized void store(ResourceResolver serviceResolver, Map<String, Object> map) throws PersistenceException {
+    public synchronized void store(ResourceResolver serviceResolver, Map<String, Object> map)
+            throws PersistenceException {
         Resource parent = getParent(serviceResolver);
         Resource store = parent.getChild(storeId);
 
@@ -116,14 +115,14 @@ public class LocalStore {
 
     @Nonnull
     private Resource getParent(ResourceResolver resolver) {
-        String msg = "Parent path " + rootPath + " should have been created on construction. Possibly the stores were reset";
+        String msg =
+                "Parent path " + rootPath + " should have been created on construction. Possibly the stores were reset";
         return requireNonNull(resolver.getResource(rootPath), msg);
     }
 
     private void createParent() {
         try (ResourceResolver resolver = getBookKeeperServiceResolver()) {
-            ResourceUtil.getOrCreateResource(resolver,
-                    rootPath, "sling:Folder", "sling:Folder", true);
+            ResourceUtil.getOrCreateResource(resolver, rootPath, "sling:Folder", "sling:Folder", true);
         } catch (Exception e) {
             throw new RuntimeException("Failed to create parent path " + rootPath + ". " + e.getMessage(), e);
         }
@@ -134,9 +133,9 @@ public class LocalStore {
                 .filter(this::isNotJCRProperty)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-    
+
     private boolean isNotJCRProperty(Entry<String, Object> entry) {
-    	return entry.getKey() != null && !entry.getKey().startsWith("jcr:");
+        return entry.getKey() != null && !entry.getKey().startsWith("jcr:");
     }
 
     private ResourceResolver getBookKeeperServiceResolver() throws LoginException {

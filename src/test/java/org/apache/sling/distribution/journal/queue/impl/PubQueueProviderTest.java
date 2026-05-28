@@ -18,30 +18,6 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.apache.sling.distribution.queue.DistributionQueueCapabilities.CLEARABLE;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -49,6 +25,18 @@ import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.commons.metrics.Timer;
@@ -82,18 +70,29 @@ import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.event.EventAdmin;
 
+import static org.apache.sling.distribution.queue.DistributionQueueCapabilities.CLEARABLE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 public class PubQueueProviderTest {
     private static final String PUB1_AGENT_NAME = "pub1";
     private static final String PUB2_AGENT_NAME = "pub2";
 
     private static final String SUB_SLING_ID = UUID.randomUUID().toString();
     private static final String SUB_AGENT_NAME = "sub1";
-    private static final String SUB_AGENT_ID = SUB_SLING_ID +"-" + SUB_AGENT_NAME;
-
+    private static final String SUB_AGENT_ID = SUB_SLING_ID + "-" + SUB_AGENT_NAME;
 
     @Mock
     private MessagingProvider clientProvider;
-    
+
     @Captor
     private ArgumentCaptor<MessageHandler<PackageMessage>> handlerCaptor;
 
@@ -102,7 +101,7 @@ public class PubQueueProviderTest {
 
     @Mock
     private Closeable poller;
-    
+
     @Mock
     private Closeable statPoller;
 
@@ -121,61 +120,59 @@ public class PubQueueProviderTest {
 
     private PubQueueProviderImpl queueProvider;
     private MBeanServer mbeanServer;
-    
+
     @Before
     public void before() throws Exception {
         MockitoAnnotations.openMocks(this).close();
-        when(callback.createConsumer(handlerCaptor.capture()))
-                .thenReturn(poller);
+        when(callback.createConsumer(handlerCaptor.capture())).thenReturn(poller);
         when(clientProvider.createPoller(
-                Mockito.eq(Topics.STATUS_TOPIC), 
-                Mockito.any(Reset.class),
-                statHandlerCaptor.capture()))
-        .thenReturn(statPoller);
+                        Mockito.eq(Topics.STATUS_TOPIC), Mockito.any(Reset.class), statHandlerCaptor.capture()))
+                .thenReturn(statPoller);
         QueueErrors queueErrors = mock(QueueErrors.class);
-        queueProvider = new PubQueueProviderImpl(eventAdmin, queueErrors,  callback, context);
+        queueProvider = new PubQueueProviderImpl(eventAdmin, queueErrors, callback, context);
         handler = handlerCaptor.getValue();
     }
 
     @After
     public void after() throws IOException {
         queueProvider.close();
-        verify(poller,  atLeast(1)).close();
+        verify(poller, atLeast(1)).close();
     }
-    
+
     @SuppressWarnings("null")
     @Test
     public void test() throws Exception {
         handler.handle(info(1L), packageMessage("packageid1", PUB1_AGENT_NAME));
         handler.handle(info(2L), packageMessage("packageid2", PUB2_AGENT_NAME));
         handler.handle(info(3L), packageMessage("packageid3", PUB1_AGENT_NAME));
-        
+
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, null));
-        
+                .thenReturn(new QueueState(0, -1, 0, null));
+
         // Full pub1 queue contains all packages from pub1
         DistributionQueue queue = queueProvider.getQueue(PUB1_AGENT_NAME, SUB_AGENT_ID);
         Iterator<DistributionQueueEntry> it1 = queue.getEntries(0, -1).iterator();
         assertThat(it1.next().getItem().getPackageId(), equalTo("packageid1"));
         assertThat(it1.next().getItem().getPackageId(), equalTo("packageid3"));
-        
+
         // With offset 1 first package is removed
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(1, -1, 0, null));
-        
+                .thenReturn(new QueueState(1, -1, 0, null));
+
         DistributionQueue queue2 = queueProvider.getQueue(PUB1_AGENT_NAME, SUB_AGENT_ID);
         Iterator<DistributionQueueEntry> it2 = queue2.getEntries(0, 20).iterator();
         assertThat(it2.next().getItem().getPackageId(), equalTo("packageid3"));
         assertThat(it2.hasNext(), equalTo(false));
-        
+
         mbeanServer = ManagementFactory.getPlatformMBeanServer();
-        Set<ObjectInstance> mbeans = mbeanServer.queryMBeans(new ObjectName("org.apache.sling.distribution:type=OffsetQueue,id="+PUB1_AGENT_NAME), null);
+        Set<ObjectInstance> mbeans = mbeanServer.queryMBeans(
+                new ObjectName("org.apache.sling.distribution:type=OffsetQueue,id=" + PUB1_AGENT_NAME), null);
         ObjectInstance mbean = mbeans.iterator().next();
         assertThat(getAttrib(mbean, "Size"), equalTo(2));
         assertThat(getAttrib(mbean, "HeadOffset"), equalTo(1L));
         assertThat(getAttrib(mbean, "TailOffset"), equalTo(3L));
     }
-    
+
     @Test
     public void testQueueSizeWithTwoPackages() throws Exception {
         handler.handle(info(0L), packageMessage("packageid1", PUB1_AGENT_NAME));
@@ -183,20 +180,20 @@ public class PubQueueProviderTest {
         handler.handle(info(2L), packageMessage("packageid3", PUB1_AGENT_NAME));
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
+                .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
         queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true);
         queueProvider.triggerQueueSizeRefreshForTest();
         int size = queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true);
         assertThat(size, equalTo(2));
         assertThat(queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, false), equalTo(0));
     }
-    
+
     @Test
     public void testQueueSizeWithoutPackages() throws Exception {
         handler.handle(info(1L), packageMessage("packageid2", PUB2_AGENT_NAME));
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, null));
+                .thenReturn(new QueueState(0, -1, 0, null));
 
         int size = queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true);
         assertThat(size, equalTo(0));
@@ -209,7 +206,7 @@ public class PubQueueProviderTest {
         handler.handle(info(2L), packageMessage("packageid3", PUB1_AGENT_NAME));
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
+                .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
 
         queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true);
         queueProvider.triggerQueueSizeRefreshForTest();
@@ -219,14 +216,14 @@ public class PubQueueProviderTest {
 
         assertThat(queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true), equalTo(2));
     }
-    
+
     @SuppressWarnings("null")
     @Test
     public void testEmptyErrorQueue() throws Exception {
         DistributionQueue queue = queueProvider.getQueue(PUB1_AGENT_NAME, SUB_AGENT_ID + "-error");
         assertThat(queue.getStatus().getItemsCount(), equalTo(0));
     }
-    
+
     @SuppressWarnings("null")
     @Test
     public void testErrorQueue() throws Exception {
@@ -238,12 +235,12 @@ public class PubQueueProviderTest {
         handler.handle(info, pkgMsg1);
         PackageStatusMessage statusMsg1 = statusMessage(info.getOffset(), pkgMsg1);
         queueProvider.handleStatus(info, statusMsg1);
-        
+
         DistributionQueue queue = queueProvider.getQueue(PUB1_AGENT_NAME, SUB_AGENT_ID + "-error");
         assertThat(queue.getStatus().getItemsCount(), equalTo(1));
         DistributionQueueEntry head = queue.getHead();
         DistributionQueueItem item = head.getItem();
-        assertThat(item.getPackageId(), equalTo("packageid1")); 
+        assertThat(item.getPackageId(), equalTo("packageid1"));
     }
 
     @Test
@@ -251,7 +248,7 @@ public class PubQueueProviderTest {
         queueProvider.close();
         queueProvider.close();
     }
-    
+
     @Test
     public void testCleanUp() {
         handler.handle(info(0L), packageMessage("packageid1", PUB1_AGENT_NAME));
@@ -261,8 +258,8 @@ public class PubQueueProviderTest {
         handler = handlerCaptor.getValue();
         handler.handle(info(0L), packageMessage("packageid1", PUB1_AGENT_NAME));
         assertThat(queueSize(), equalTo(1));
-        
-        for (long c=0; c<10001;c++) {
+
+        for (long c = 0; c < 10001; c++) {
             handler.handle(info(c), packageMessage("packageid" + c, PUB1_AGENT_NAME));
         }
         assertThat(queueSize(), equalTo(10001));
@@ -279,7 +276,7 @@ public class PubQueueProviderTest {
         handler.handle(info(2L), packageMessage("packageid3", PUB1_AGENT_NAME));
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
+                .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
 
         assertThat(queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true), equalTo(0));
         queueProvider.triggerQueueSizeRefreshForTest();
@@ -293,8 +290,8 @@ public class PubQueueProviderTest {
         when(mockMetrics.timer(Mockito.anyString())).thenReturn(mockTimer);
 
         QueueErrors queueErrors = mock(QueueErrors.class);
-        PubQueueProviderImpl providerWithMetrics = new PubQueueProviderImpl(
-            eventAdmin, queueErrors, callback, context, mockMetrics);
+        PubQueueProviderImpl providerWithMetrics =
+                new PubQueueProviderImpl(eventAdmin, queueErrors, callback, context, mockMetrics);
         MessageHandler<PackageMessage> handler2 = handlerCaptor.getAllValues().get(1);
 
         handler2.handle(info(0L), packageMessage("packageid1", PUB1_AGENT_NAME));
@@ -302,7 +299,7 @@ public class PubQueueProviderTest {
         handler2.handle(info(2L), packageMessage("packageid3", PUB1_AGENT_NAME));
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
+                .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
 
         providerWithMetrics.getMaxQueueSize(PUB1_AGENT_NAME, true);
         providerWithMetrics.triggerQueueSizeRefreshForTest();
@@ -315,12 +312,10 @@ public class PubQueueProviderTest {
         handler.handle(info(0L), packageMessage("packageid1", PUB1_AGENT_NAME));
         handler.handle(info(1L), packageMessage("packageid2", PUB2_AGENT_NAME));
         handler.handle(info(2L), packageMessage("packageid3", PUB1_AGENT_NAME));
-        when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME))
-            .thenThrow(new RuntimeException("test"));
-        when(callback.getSubscribedAgentIds(PUB2_AGENT_NAME))
-            .thenReturn(Collections.singleton("sub1"));
+        when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenThrow(new RuntimeException("test"));
+        when(callback.getSubscribedAgentIds(PUB2_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB2_AGENT_NAME), Mockito.eq("sub1")))
-            .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
+                .thenReturn(new QueueState(0, -1, 0, mock(ClearCallback.class)));
 
         queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true);
         queueProvider.getMaxQueueSize(PUB2_AGENT_NAME, true);
@@ -335,7 +330,7 @@ public class PubQueueProviderTest {
         handler.handle(info(2L), packageMessage("packageid3", PUB1_AGENT_NAME));
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(Collections.singleton("sub1"));
         when(callback.getQueueState(Mockito.eq(PUB1_AGENT_NAME), Mockito.any()))
-            .thenReturn(new QueueState(0, -1, 0, null));
+                .thenReturn(new QueueState(0, -1, 0, null));
 
         queueProvider.getMaxQueueSize(PUB1_AGENT_NAME, true);
         queueProvider.triggerQueueSizeRefreshForTest();
@@ -361,7 +356,10 @@ public class PubQueueProviderTest {
         when(callback.getQueueState(PUB1_AGENT_NAME, "sub1")).thenReturn(new QueueState(0, -1, 0, cb));
         when(callback.getQueueState(PUB1_AGENT_NAME, "sub2")).thenReturn(new QueueState(5, -1, 0, null));
         Set<String> names = queueProvider.getAggregatedQueueNames(PUB1_AGENT_NAME);
-        assertThat(names, containsInAnyOrder(PubQueueProvider.AGGREGATED_QUEUE_PERSISTED, PubQueueProvider.AGGREGATED_QUEUE_PUBLIC));
+        assertThat(
+                names,
+                containsInAnyOrder(
+                        PubQueueProvider.AGGREGATED_QUEUE_PERSISTED, PubQueueProvider.AGGREGATED_QUEUE_PUBLIC));
     }
 
     @Test
@@ -371,7 +369,8 @@ public class PubQueueProviderTest {
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(new HashSet<>(Arrays.asList("sub1", "sub2")));
         when(callback.getQueueState(PUB1_AGENT_NAME, "sub1")).thenReturn(new QueueState(0, -1, 0, cb));
         when(callback.getQueueState(PUB1_AGENT_NAME, "sub2")).thenReturn(new QueueState(5, -1, 0, null));
-        DistributionQueue q = queueProvider.getAggregatedQueue(PUB1_AGENT_NAME, PubQueueProvider.AGGREGATED_QUEUE_PUBLIC);
+        DistributionQueue q =
+                queueProvider.getAggregatedQueue(PUB1_AGENT_NAME, PubQueueProvider.AGGREGATED_QUEUE_PUBLIC);
         assertThat(q, notNullValue());
         assertThat(q.hasCapability(CLEARABLE), equalTo(false));
     }
@@ -383,7 +382,8 @@ public class PubQueueProviderTest {
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(new HashSet<>(Arrays.asList("sub1", "sub2")));
         when(callback.getQueueState(PUB1_AGENT_NAME, "sub1")).thenReturn(new QueueState(0, -1, 0, cb));
         when(callback.getQueueState(PUB1_AGENT_NAME, "sub2")).thenReturn(new QueueState(5, -1, 0, null));
-        DistributionQueue q = queueProvider.getAggregatedQueue(PUB1_AGENT_NAME, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED);
+        DistributionQueue q =
+                queueProvider.getAggregatedQueue(PUB1_AGENT_NAME, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED);
         assertThat(q, notNullValue());
         assertThat(q.hasCapability(CLEARABLE), equalTo(true));
     }
@@ -396,7 +396,8 @@ public class PubQueueProviderTest {
         when(callback.getSubscribedAgentIds(PUB1_AGENT_NAME)).thenReturn(new HashSet<>(Arrays.asList("a", "b")));
         when(callback.getQueueState(PUB1_AGENT_NAME, "a")).thenReturn(new QueueState(0, -1, 0, cb1));
         when(callback.getQueueState(PUB1_AGENT_NAME, "b")).thenReturn(new QueueState(0, -1, 0, cb2));
-        DistributionQueue q = queueProvider.getAggregatedQueue(PUB1_AGENT_NAME, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED);
+        DistributionQueue q =
+                queueProvider.getAggregatedQueue(PUB1_AGENT_NAME, PubQueueProvider.AGGREGATED_QUEUE_PERSISTED);
         DistributionQueueEntry head = q.getHead();
         assertThat(head, notNullValue());
         q.remove(head.getId());
@@ -421,12 +422,12 @@ public class PubQueueProviderTest {
 
     private PackageStatusMessage statusMessage(long offset, PackageMessage pkgMsg1) {
         return PackageStatusMessage.builder()
-            .offset(offset)
-            .pubAgentName(PUB1_AGENT_NAME)
-            .status(Status.REMOVED_FAILED)
-            .subAgentName(SUB_AGENT_NAME)
-            .subSlingId(SUB_SLING_ID)
-            .build();
+                .offset(offset)
+                .pubAgentName(PUB1_AGENT_NAME)
+                .status(Status.REMOVED_FAILED)
+                .subAgentName(SUB_AGENT_NAME)
+                .subSlingId(SUB_SLING_ID)
+                .build();
     }
 
     private Object getAttrib(ObjectInstance mbean, String key)

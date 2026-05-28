@@ -18,23 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.sling.distribution.agent.DistributionAgentState.IDLE;
-import static org.apache.sling.distribution.event.DistributionEventProperties.*;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.lessThan;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
@@ -64,9 +47,6 @@ import org.apache.sling.distribution.journal.*;
 import org.apache.sling.distribution.journal.bookkeeper.BookKeeper;
 import org.apache.sling.distribution.journal.bookkeeper.BookKeeperFactory;
 import org.apache.sling.distribution.journal.bookkeeper.LocalStore;
-import org.apache.sling.distribution.journal.shared.NoOpImportPreProcessor;
-import org.apache.sling.distribution.journal.shared.OnlyOnLeader;
-import org.apache.sling.distribution.journal.shared.NoOpImportPostProcessor;
 import org.apache.sling.distribution.journal.impl.precondition.Precondition;
 import org.apache.sling.distribution.journal.impl.precondition.Precondition.Decision;
 import org.apache.sling.distribution.journal.messages.ClearCommand;
@@ -76,6 +56,9 @@ import org.apache.sling.distribution.journal.messages.PackageMessage.ReqType;
 import org.apache.sling.distribution.journal.messages.PackageStatusMessage;
 import org.apache.sling.distribution.journal.messages.PackageStatusMessage.Status;
 import org.apache.sling.distribution.journal.messages.PingMessage;
+import org.apache.sling.distribution.journal.shared.NoOpImportPostProcessor;
+import org.apache.sling.distribution.journal.shared.NoOpImportPreProcessor;
+import org.apache.sling.distribution.journal.shared.OnlyOnLeader;
 import org.apache.sling.distribution.journal.shared.TestMessageInfo;
 import org.apache.sling.distribution.journal.shared.Topics;
 import org.apache.sling.distribution.packaging.DistributionPackage;
@@ -100,15 +83,32 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.util.converter.Converters;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.sling.distribution.agent.DistributionAgentState.IDLE;
+import static org.apache.sling.distribution.event.DistributionEventProperties.*;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class SubscriberTest {
 
     private static final String SUB1_SLING_ID = "sub1sling";
     private static final String SUB1_AGENT_NAME = "sub1agent";
-    
+
     private static final String PUB1_SLING_ID = "pub1sling";
     private static final String PUB1_AGENT_NAME = "pub1agent";
-    
+
     private static final String STORE_PACKAGE_NODE_NAME = "myserver.apache.org_somepath_package";
 
     private static final PackageMessage BASIC_ADD_PACKAGE = PackageMessage.builder()
@@ -130,8 +130,6 @@ public class SubscriberTest {
             .paths(Arrays.asList("/test"))
             .build();
 
-
-    
     @Mock
     private BundleContext context;
 
@@ -149,16 +147,16 @@ public class SubscriberTest {
 
     @Spy
     private ResourceResolverFactory resolverFactory = new MockResourceResolverFactory();
-    
+
     @Mock
     MessagingProvider clientProvider;
-    
+
     @Mock
     EventAdmin eventAdmin;
-    
+
     @Mock
     private ResourceResolver resourceResolver;
-    
+
     @Mock
     private MessageSender<DiscoveryMessage> discoverySender;
 
@@ -170,10 +168,10 @@ public class SubscriberTest {
 
     @Spy
     private ImportPreProcessor importPreProcessor = new NoOpImportPreProcessor();
-    
+
     @Spy
     private ImportPostProcessor importPostProcessor = new NoOpImportPostProcessor();
-    
+
     @Spy
     SubscriberReadyStore subscriberReadyStore = new SubscriberReadyStore();
 
@@ -181,37 +179,37 @@ public class SubscriberTest {
     BookKeeperFactory bookKeeperFactory;
 
     DistributionSubscriber subscriber;
-    
+
     @Captor
     private ArgumentCaptor<HandlerAdapter<PackageMessage>> packageCaptor;
-    
+
     @Captor
     private ArgumentCaptor<HandlerAdapter<PingMessage>> pingCaptor;
-    
+
     @Captor
     private ArgumentCaptor<HandlerAdapter<ClearCommand>> commandCaptor;
-    
+
     @Captor
     private ArgumentCaptor<PackageStatusMessage> statusMessageCaptor;
 
     @Mock
     private Closeable poller;
-    
+
     @Mock
     private Closeable commandPoller;
-    
+
     @Mock
     private ServiceRegistration<DistributionAgent> reg;
-    
+
     private MessageHandler<PackageMessage> packageHandler;
-    
+
     private MessageHandler<ClearCommand> commandHandler;
 
     @Before
     public void before() throws URISyntaxException {
         DistributionSubscriber.QUEUE_FETCH_DELAY_MILLIS = 100;
         DistributionSubscriber.RETRY_DELAY_MILLIS = 100;
-        
+
         Awaitility.setDefaultPollDelay(Duration.ZERO);
         Awaitility.setDefaultPollInterval(Duration.ONE_HUNDRED_MILLISECONDS);
         when(packageBuilder.getType()).thenReturn("journal");
@@ -219,43 +217,43 @@ public class SubscriberTest {
 
         URI serverURI = new URI("http://myserver.apache.org:1234/somepath");
         when(clientProvider.getServerUri()).thenReturn(serverURI);
-        when(clientProvider.<PackageStatusMessage>createSender(Topics.STATUS_TOPIC)).thenReturn(statusSender);
-        when(clientProvider.<DiscoveryMessage>createSender(Topics.DISCOVERY_TOPIC)).thenReturn(discoverySender);
+        when(clientProvider.<PackageStatusMessage>createSender(Topics.STATUS_TOPIC))
+                .thenReturn(statusSender);
+        when(clientProvider.<DiscoveryMessage>createSender(Topics.DISCOVERY_TOPIC))
+                .thenReturn(discoverySender);
 
         when(clientProvider.createPoller(
-                Mockito.eq(Topics.COMMAND_TOPIC),
-                Mockito.eq(Reset.earliest),
-                commandCaptor.capture()))
-            .thenReturn(commandPoller);
-        
+                        Mockito.eq(Topics.COMMAND_TOPIC), Mockito.eq(Reset.earliest), commandCaptor.capture()))
+                .thenReturn(commandPoller);
+
         // you should call initSubscriber in each test method
     }
 
     @After
     public void after() throws IOException {
         subscriber.deactivate();
-        //verify(poller, atLeastOnce()).close();
+        // verify(poller, atLeastOnce()).close();
     }
-    
+
     @Test
     public void testReceiveNotSubscribed() throws DistributionException {
         assumeNoPrecondition();
         initSubscriber(Collections.singletonMap("agentNames", "dummy"));
         assertThat(subscriber.getState(), equalTo(DistributionAgentState.IDLE));
-        
+
         MessageInfo info = createInfo(100);
         PackageMessage message = BASIC_ADD_PACKAGE;
         packageHandler.handle(info, message);
-        
-        verify(packageBuilder, timeout(1000).times(0)).installPackage(any(ResourceResolver.class),
-                any(DistributionPackage.class));
+
+        verify(packageBuilder, timeout(1000).times(0))
+                .installPackage(any(ResourceResolver.class), any(DistributionPackage.class));
         assertThat(getStoredOffset(), nullValue());
-        for (int c=0; c < BookKeeper.COMMIT_AFTER_NUM_SKIPPED; c++) {
+        for (int c = 0; c < BookKeeper.COMMIT_AFTER_NUM_SKIPPED; c++) {
             packageHandler.handle(info, message);
         }
         assertThat(getStoredOffset(), equalTo(100l));
     }
-    
+
     @Test
     public void testReceive() throws DistributionException {
         assumeNoPrecondition();
@@ -266,12 +264,13 @@ public class SubscriberTest {
         PackageMessage message = BASIC_ADD_PACKAGE;
 
         packageHandler.handle(info, message);
-        
+
         verifyNoStatusMessageSent();
     }
 
     @Test
-    public void testImportPreAndPostProcessInvoked() throws DistributionException, ImportPostProcessException, ImportPreProcessException {
+    public void testImportPreAndPostProcessInvoked()
+            throws DistributionException, ImportPostProcessException, ImportPreProcessException {
         assumeNoPrecondition();
         initSubscriber();
         assertThat(subscriber.getState(), equalTo(DistributionAgentState.IDLE));
@@ -280,10 +279,10 @@ public class SubscriberTest {
         packageHandler.handle(info, message);
 
         verifyNoStatusMessageSent();
-        
+
         Map<String, Object> props = new HashMap<>();
         props.put(DISTRIBUTION_TYPE, message.getReqType().name());
-        props.put(DISTRIBUTION_PATHS,  message.getPaths());
+        props.put(DISTRIBUTION_PATHS, message.getPaths());
         props.put(DISTRIBUTION_PACKAGE_ID, message.getPkgId());
         props.put(DISTRIBUTION_COMPONENT_NAME, message.getPubAgentName());
 
@@ -295,8 +294,9 @@ public class SubscriberTest {
     public void testImportPreProcessError() throws ImportPreProcessException {
         assumeNoPrecondition();
         initSubscriber(Collections.singletonMap("maxRetries", "0"));
-        doThrow(new ImportPreProcessException("Failed pre process")).
-                when(importPreProcessor).process(any());
+        doThrow(new ImportPreProcessException("Failed pre process"))
+                .when(importPreProcessor)
+                .process(any());
 
         MessageInfo info = createInfo(0L);
         packageHandler.handle(info, BASIC_ADD_PACKAGE);
@@ -308,13 +308,14 @@ public class SubscriberTest {
     public void testImportPostProcessError() throws DistributionException, ImportPostProcessException {
         assumeNoPrecondition();
         initSubscriber(Collections.singletonMap("maxRetries", "0"));
-        doThrow(new ImportPostProcessException("Failed post process")).
-            when(importPostProcessor).process(any());
+        doThrow(new ImportPostProcessException("Failed post process"))
+                .when(importPostProcessor)
+                .process(any());
 
         MessageInfo info = createInfo(0l);
         PackageMessage message = BASIC_ADD_PACKAGE;
         subscriber.tryProcess(info, message);
-        
+
         verifyStatusMessageSentWithStatus(Status.REMOVED_FAILED);
     }
 
@@ -336,12 +337,12 @@ public class SubscriberTest {
         assumeNoPrecondition();
         initSubscriber(Collections.singletonMap("maxRetries", "1"));
         when(packageBuilder.installPackage(any(ResourceResolver.class), any(DistributionPackage.class)))
-        .thenThrow(new RuntimeException("Expected"));
+                .thenThrow(new RuntimeException("Expected"));
 
         MessageInfo info = createInfo(0l);
         PackageMessage message = BASIC_ADD_PACKAGE;
         packageHandler.handle(info, message);
-        
+
         verifyStatusMessageSentWithStatus(Status.REMOVED_FAILED);
     }
 
@@ -354,7 +355,7 @@ public class SubscriberTest {
         MessageInfo info = createInfo(0l);
         PackageMessage message = BASIC_ADD_PACKAGE;
         packageHandler.handle(info, message);
-        
+
         verifyStatusMessageSentWithStatus(Status.IMPORTED);
     }
 
@@ -366,13 +367,14 @@ public class SubscriberTest {
         MessageInfo info = createInfo(11l);
         PackageMessage message = BASIC_ADD_PACKAGE;
         packageHandler.handle(info, message);
-        
+
         await().until(this::getStoredStatus, equalTo(PackageStatusMessage.Status.REMOVED));
         verifyStatusMessageSentWithStatus(Status.REMOVED);
     }
-    
+
     @Test
-    public void testPreconditionTimeoutExceptionBecauseOfShutdown() throws DistributionException, InterruptedException, TimeoutException, IOException {
+    public void testPreconditionTimeoutExceptionBecauseOfShutdown()
+            throws DistributionException, InterruptedException, TimeoutException, IOException {
         initSubscriber(Collections.singletonMap("editable", "true"));
         long startedAt = System.currentTimeMillis();
 
@@ -380,8 +382,11 @@ public class SubscriberTest {
         PackageMessage message = BASIC_ADD_PACKAGE;
         packageHandler.handle(info, message);
         subscriber.deactivate();
-        
-        assertThat("After deactivate precondition should time out quickly.", System.currentTimeMillis() - startedAt, lessThan(1000l));
+
+        assertThat(
+                "After deactivate precondition should time out quickly.",
+                System.currentTimeMillis() - startedAt,
+                lessThan(1000l));
     }
 
     @Test
@@ -393,12 +398,14 @@ public class SubscriberTest {
         MessageInfo info = createInfo(0l);
         PackageMessage message = BASIC_ADD_PACKAGE;
         Thread thread = new Thread(() -> subscriber.tryProcess(info, message));
-        thread.start();	
-        await("Should report ready").until(() -> subscriberReadyStore.getReadyHolder(SUB1_AGENT_NAME).get());
+        thread.start();
+        await("Should report ready")
+                .until(() ->
+                        subscriberReadyStore.getReadyHolder(SUB1_AGENT_NAME).get());
         sem.release();
         thread.join();
     }
-    
+
     private void verifyNoStatusMessageSent() {
         verify(statusSender, times(0)).accept(any());
     }
@@ -426,7 +433,7 @@ public class SubscriberTest {
 
     private void createResource(String path) throws PersistenceException, LoginException {
         try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(null)) {
-            ResourceUtil.getOrCreateResource(resolver, path,"sling:Folder", "sling:Folder", true);
+            ResourceUtil.getOrCreateResource(resolver, path, "sling:Folder", "sling:Folder", true);
         }
     }
 
@@ -444,7 +451,8 @@ public class SubscriberTest {
         Map<String, Object> props = new HashMap<>();
         props.putAll(basicProps);
         props.putAll(overrides);
-        SubscriberConfiguration config = Converters.standardConverter().convert(props).to(SubscriberConfiguration.class);
+        SubscriberConfiguration config =
+                Converters.standardConverter().convert(props).to(SubscriberConfiguration.class);
         OnlyOnLeader onlyOnLeader = new OnlyOnLeader(context);
         this.subscriber = new DistributionSubscriber(
                 packageBuilder,
@@ -458,12 +466,13 @@ public class SubscriberTest {
                 config,
                 context,
                 props);
-        verify(clientProvider).createPoller(
-                Mockito.eq(Topics.PACKAGE_TOPIC),
-                Mockito.eq(Reset.latest),
-                Mockito.isNull(String.class),
-                packageCaptor.capture(),
-                pingCaptor.capture());
+        verify(clientProvider)
+                .createPoller(
+                        Mockito.eq(Topics.PACKAGE_TOPIC),
+                        Mockito.eq(Reset.latest),
+                        Mockito.isNull(String.class),
+                        packageCaptor.capture(),
+                        pingCaptor.capture());
         packageHandler = packageCaptor.getValue().getHandler();
         if ("true".equals(props.get("editable"))) {
             commandHandler = commandCaptor.getValue().getHandler();
@@ -473,7 +482,7 @@ public class SubscriberTest {
     private void waitSubscriber(DistributionAgentState expectedState) {
         await().atMost(30, SECONDS).until(subscriber::getState, equalTo(expectedState));
     }
-    
+
     private void assumeNoPrecondition() {
         try {
             when(precondition.canProcess(eq(SUB1_AGENT_NAME), anyLong())).thenReturn(Decision.ACCEPT);
@@ -485,10 +494,10 @@ public class SubscriberTest {
     private void assumeWaitingForPrecondition(Semaphore sem) {
         try {
             when(precondition.canProcess(eq(SUB1_AGENT_NAME), anyLong()))
-                .thenAnswer(invocation -> sem.tryAcquire(10000, TimeUnit.SECONDS) ? Decision.ACCEPT : Decision.SKIP);
+                    .thenAnswer(
+                            invocation -> sem.tryAcquire(10000, TimeUnit.SECONDS) ? Decision.ACCEPT : Decision.SKIP);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-    
 }

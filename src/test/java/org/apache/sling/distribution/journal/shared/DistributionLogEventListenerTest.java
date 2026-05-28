@@ -18,14 +18,6 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME;
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_PATHS;
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_TYPE;
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +37,14 @@ import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
 
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME;
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_PATHS;
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_TYPE;
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class DistributionLogEventListenerTest {
 
@@ -52,21 +52,22 @@ public class DistributionLogEventListenerTest {
 
     @Mock
     private BundleContext context;
-    
+
     @Mock
     private ServiceRegistration<EventHandler> reg;
 
-    private DefaultDistributionLog log = new DefaultDistributionLog("agent1", this.getClass(), DefaultDistributionLog.LogLevel.INFO);
-    
+    private DefaultDistributionLog log =
+            new DefaultDistributionLog("agent1", this.getClass(), DefaultDistributionLog.LogLevel.INFO);
+
     private DistributionLogEventListener listener;
 
     @Before
     public void before() {
         when(context.registerService(Mockito.eq(EventHandler.class), Mockito.any(EventHandler.class), Mockito.any()))
-            .thenReturn(reg);
+                .thenReturn(reg);
         listener = new DistributionLogEventListener(context, log, "agent1");
     }
-    
+
     @After
     public void after() {
         listener.close();
@@ -85,13 +86,13 @@ public class DistributionLogEventListenerTest {
         String line = log.getLines().iterator().next();
         assertThat(line, endsWith("Successfully applied package with id packageId, type Add, paths [/test]"));
     }
-    
+
     @Test
     public void testLogEvent() {
         LogMessage logMessage = LogMessage.builder()
-            .pubAgentName("agent1")
-            .message(ERROR_MESSAGE)
-            .build();
+                .pubAgentName("agent1")
+                .message(ERROR_MESSAGE)
+                .build();
         Map<String, Object> props = new HashMap<>();
         props.put(DiscoveryService.KEY_MESSAGE, logMessage);
         Event event = new Event(DiscoveryService.TOPIC_DISTRIBUTION_LOG, props);
@@ -99,5 +100,4 @@ public class DistributionLogEventListenerTest {
         String line = log.getLines().iterator().next();
         assertThat(line, endsWith(ERROR_MESSAGE));
     }
-
 }

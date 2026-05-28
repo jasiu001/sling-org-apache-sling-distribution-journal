@@ -23,10 +23,9 @@ import java.util.concurrent.Callable;
 import org.apache.sling.commons.metrics.Timer;
 
 public final class Timed {
-    
-    private Timed() {
-    }
-    
+
+    private Timed() {}
+
     /**
      * Runs provided code updating provided metric
      * with its execution time.

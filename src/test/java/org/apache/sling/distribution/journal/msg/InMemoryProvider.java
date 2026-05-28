@@ -31,11 +31,10 @@ import org.apache.sling.distribution.journal.MessagingProvider;
 import org.apache.sling.distribution.journal.Reset;
 
 public class InMemoryProvider implements MessagingProvider {
-    
+
     Map<String, InMemoryTopic> topics = new ConcurrentHashMap<>();
-    
-    public InMemoryProvider() {
-    }
+
+    public InMemoryProvider() {}
 
     @Override
     public <T> MessageSender<T> createSender(String topicName) {
@@ -50,9 +49,7 @@ public class InMemoryProvider implements MessagingProvider {
     }
 
     @Override
-    public void assertTopic(String topic) throws MessagingException {
-        
-    }
+    public void assertTopic(String topic) throws MessagingException {}
 
     @Override
     public long retrieveOffset(String topicName, Reset reset) {
@@ -77,7 +74,7 @@ public class InMemoryProvider implements MessagingProvider {
             throw new RuntimeException(e);
         }
     }
-    
+
     public void setLatestOffset(String topicName, long offset) {
         getOrCreateTopic(topicName).setLatestOffset(offset);
     }
@@ -85,5 +82,4 @@ public class InMemoryProvider implements MessagingProvider {
     private InMemoryTopic getOrCreateTopic(String topicName) {
         return topics.computeIfAbsent(topicName, name -> new InMemoryTopic(name));
     }
-
 }

@@ -18,6 +18,8 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
+import java.util.Hashtable;
+
 import org.apache.sling.discovery.TopologyEvent;
 import org.apache.sling.discovery.TopologyEventListener;
 import org.osgi.framework.BundleContext;
@@ -27,8 +29,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Hashtable;
 
 import static org.apache.sling.discovery.TopologyEvent.Type.*;
 

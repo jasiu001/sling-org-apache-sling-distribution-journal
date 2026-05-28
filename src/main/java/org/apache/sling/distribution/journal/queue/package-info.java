@@ -17,5 +17,4 @@
  * under the License.
  */
 
-
 package org.apache.sling.distribution.journal.queue;

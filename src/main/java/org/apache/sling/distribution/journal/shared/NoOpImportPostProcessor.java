@@ -24,12 +24,8 @@ import org.apache.sling.distribution.ImportPostProcessException;
 import org.apache.sling.distribution.ImportPostProcessor;
 import org.osgi.service.component.annotations.Component;
 
-@Component(
-    property = {
-        "type=default"
-    }
-)
+@Component(property = {"type=default"})
 public class NoOpImportPostProcessor implements ImportPostProcessor {
-        @Override
-        public void process(Map<String, Object> props) throws ImportPostProcessException {}
+    @Override
+    public void process(Map<String, Object> props) throws ImportPostProcessException {}
 }
