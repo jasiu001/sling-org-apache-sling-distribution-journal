@@ -18,12 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.util.Collections;
 import java.util.function.Consumer;
 
@@ -33,6 +27,12 @@ import org.apache.sling.distribution.journal.messages.SubscriberState;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AnnouncerTest {
 
@@ -46,7 +46,15 @@ public class AnnouncerTest {
         Consumer<DiscoveryMessage> sender = Mockito.mock(Consumer.class);
         BookKeeper bookKeeper = Mockito.mock(BookKeeper.class);
         when(bookKeeper.loadOffset()).thenReturn(1L);
-        Announcer announcer = new Announcer(SUB1_SLING_ID, SUB1_AGENT_NAME, Collections.singleton(PUB1_AGENT_NAME), sender, bookKeeper, -1, false, 10000);
+        Announcer announcer = new Announcer(
+                SUB1_SLING_ID,
+                SUB1_AGENT_NAME,
+                Collections.singleton(PUB1_AGENT_NAME),
+                sender,
+                bookKeeper,
+                -1,
+                false,
+                10000);
         Thread.sleep(200);
         ArgumentCaptor<DiscoveryMessage> msg = forClass(DiscoveryMessage.class);
         verify(sender).accept(msg.capture());

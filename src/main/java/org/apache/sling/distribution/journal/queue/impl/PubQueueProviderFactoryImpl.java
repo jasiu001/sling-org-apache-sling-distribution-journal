@@ -53,5 +53,4 @@ public class PubQueueProviderFactoryImpl implements PubQueueProviderFactory {
     public PubQueueProvider create(CacheCallback callback) {
         return new PubQueueProviderImpl(eventAdmin, queueErrors, callback, context, metricsService);
     }
-
 }

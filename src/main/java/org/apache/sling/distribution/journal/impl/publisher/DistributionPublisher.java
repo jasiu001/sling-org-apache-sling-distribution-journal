@@ -18,26 +18,25 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
-import static org.apache.sling.distribution.DistributionRequestState.ACCEPTED;
-import static org.apache.sling.distribution.DistributionRequestState.DROPPED;
-import static org.apache.sling.distribution.DistributionRequestType.*;
-import static org.apache.sling.distribution.journal.shared.Strings.requireNotBlank;
-import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
-import static org.osgi.service.component.annotations.ReferencePolicyOption.GREEDY;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.commons.io.IOUtils;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.commons.metrics.MetricsService;
+import org.apache.sling.distribution.DistributionRequest;
+import org.apache.sling.distribution.DistributionRequestState;
+import org.apache.sling.distribution.DistributionResponse;
+import org.apache.sling.distribution.agent.DistributionAgentState;
+import org.apache.sling.distribution.agent.spi.DistributionAgent;
+import org.apache.sling.distribution.common.DistributionException;
+import org.apache.sling.distribution.journal.MessagingProvider;
 import org.apache.sling.distribution.journal.impl.discovery.DiscoveryService;
 import org.apache.sling.distribution.journal.impl.event.DistributionEvent;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
@@ -47,14 +46,6 @@ import org.apache.sling.distribution.journal.shared.DefaultDistributionLog;
 import org.apache.sling.distribution.journal.shared.DistributionLogEventListener;
 import org.apache.sling.distribution.journal.shared.Timed;
 import org.apache.sling.distribution.journal.shared.Topics;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.commons.metrics.MetricsService;
-import org.apache.sling.distribution.DistributionRequest;
-import org.apache.sling.distribution.DistributionRequestState;
-import org.apache.sling.distribution.DistributionResponse;
-import org.apache.sling.distribution.agent.DistributionAgentState;
-import org.apache.sling.distribution.agent.spi.DistributionAgent;
-import org.apache.sling.distribution.common.DistributionException;
 import org.apache.sling.distribution.log.spi.DistributionLog;
 import org.apache.sling.distribution.packaging.DistributionPackageBuilder;
 import org.apache.sling.distribution.queue.spi.DistributionQueue;
@@ -67,20 +58,26 @@ import org.osgi.service.condition.Condition;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.metatype.annotations.Designate;
-import org.apache.sling.distribution.journal.MessagingProvider;
+
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static org.apache.sling.distribution.DistributionRequestState.ACCEPTED;
+import static org.apache.sling.distribution.DistributionRequestState.DROPPED;
+import static org.apache.sling.distribution.DistributionRequestType.*;
+import static org.apache.sling.distribution.journal.shared.Strings.requireNotBlank;
+import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
+import static org.osgi.service.component.annotations.ReferencePolicyOption.GREEDY;
 
 /**
  * A Publisher SCD agent which produces messages to be consumed by a {@code DistributionSubscriber} agent.
  */
-@Component(
-        immediate = true,
-        configurationPid = DistributionPublisher.FACTORY_PID
-)
+@Component(immediate = true, configurationPid = DistributionPublisher.FACTORY_PID)
 @Designate(ocd = PublisherConfiguration.class, factory = true)
 @ParametersAreNonnullByDefault
 public class DistributionPublisher implements DistributionAgent {
 
-    public static final String FACTORY_PID = "org.apache.sling.distribution.journal.impl.publisher.DistributionPublisherFactory";
+    public static final String FACTORY_PID =
+            "org.apache.sling.distribution.journal.impl.publisher.DistributionPublisherFactory";
 
     @Nonnull
     private final DefaultDistributionLog distLog;
@@ -115,22 +112,18 @@ public class DistributionPublisher implements DistributionAgent {
 
     @Activate
     public DistributionPublisher(
-            @Reference
-            MessagingProvider messagingProvider,
-            @Reference(name = "packageBuilder")
-            DistributionPackageBuilder packageBuilder,
-            @Reference
-            DiscoveryService discoveryService,
-            @Reference
-            PackageMessageFactory factory,
-            @Reference
-            EventAdmin eventAdmin,
-            @Reference
-            MetricsService metricsService,
-            @Reference
-            PubQueueProvider pubQueueProvider,
-            @Reference(target = "(osgi.condition.id=toggle.FT_SLING-12218)", cardinality = OPTIONAL, policyOption = GREEDY)
-            Condition limitToggle,
+            @Reference MessagingProvider messagingProvider,
+            @Reference(name = "packageBuilder") DistributionPackageBuilder packageBuilder,
+            @Reference DiscoveryService discoveryService,
+            @Reference PackageMessageFactory factory,
+            @Reference EventAdmin eventAdmin,
+            @Reference MetricsService metricsService,
+            @Reference PubQueueProvider pubQueueProvider,
+            @Reference(
+                            target = "(osgi.condition.id=toggle.FT_SLING-12218)",
+                            cardinality = OPTIONAL,
+                            policyOption = GREEDY)
+                    Condition limitToggle,
             PublisherConfiguration config,
             BundleContext context) {
 
@@ -157,19 +150,27 @@ public class DistributionPublisher implements DistributionAgent {
 
         this.sender = messagingProvider.createSender(Topics.PACKAGE_TOPIC);
         publishMetrics.subscriberCount(() -> discoveryService.getSubscriberCount(pubAgentName));
-        
-        distLog.info("Started Publisher agent={} with packageBuilder={}, limitEnabled={}, queuedTimeout={}, queueSizeLimit={}, maxQueueSizeDelay={}, aggregateSubscriberQueues={}",
-                pubAgentName, pkgType, limitEnabled, queuedTimeout, queueSizeLimit, maxQueueSizeDelay, aggregateSubscriberQueues);
+
+        distLog.info(
+                "Started Publisher agent={} with packageBuilder={}, limitEnabled={}, queuedTimeout={}, queueSizeLimit={}, maxQueueSizeDelay={}, aggregateSubscriberQueues={}",
+                pubAgentName,
+                pkgType,
+                limitEnabled,
+                queuedTimeout,
+                queueSizeLimit,
+                maxQueueSizeDelay,
+                aggregateSubscriberQueues);
     }
 
     @Deactivate
     public void deactivate() {
         IOUtils.closeQuietly(distributionLogEventListener);
-        String msg = format("Stopped Publisher agent %s with packageBuilder %s, queuedTimeout %s",
+        String msg = format(
+                "Stopped Publisher agent %s with packageBuilder %s, queuedTimeout %s",
                 pubAgentName, pkgType, queuedTimeout);
         distLog.info(msg);
     }
-    
+
     /**
      * Get queue names for alive subscribed subscriber agents.
      */
@@ -213,8 +214,7 @@ public class DistributionPublisher implements DistributionAgent {
 
     @Nonnull
     @Override
-    public DistributionResponse execute(ResourceResolver resourceResolver,
-                                        DistributionRequest request)
+    public DistributionResponse execute(ResourceResolver resourceResolver, DistributionRequest request)
             throws DistributionException {
         if (request.getRequestType() == PULL) {
             String msg = "Request requestType=PULL not supported by this agent";
@@ -237,10 +237,10 @@ public class DistributionPublisher implements DistributionAgent {
     int getSleepTime(int queueSize) {
         if (!limitEnabled || queueSize <= queueSizeLimit) {
             return 0;
-        } else if (queueSize >= queueSizeLimit*2) {
+        } else if (queueSize >= queueSizeLimit * 2) {
             return maxQueueSizeDelay;
         } else {
-            return (queueSize-queueSizeLimit) * maxQueueSizeDelay / queueSizeLimit;
+            return (queueSize - queueSizeLimit) * maxQueueSizeDelay / queueSizeLimit;
         }
     }
 
@@ -263,23 +263,29 @@ public class DistributionPublisher implements DistributionAgent {
             if (request.getRequestType() != TEST && request.getPaths().length == 0) {
                 throw new DistributionException("Empty paths are not allowed");
             }
-            return Timed.timed(publishMetrics.getBuildPackageDuration(), () -> factory.create(packageBuilder, resourceResolver, pubAgentName, request));
+            return Timed.timed(
+                    publishMetrics.getBuildPackageDuration(),
+                    () -> factory.create(packageBuilder, resourceResolver, pubAgentName, request));
         } catch (Exception e) {
             publishMetrics.getDroppedRequests().mark();
-            String msg = format("Failed to create content package for requestType=%s, paths=%s. Error=%s",
+            String msg = format(
+                    "Failed to create content package for requestType=%s, paths=%s. Error=%s",
                     request.getRequestType(), Arrays.toString(request.getPaths()), e.getMessage());
             distLog.error(msg, e);
             throw new DistributionException(msg, e);
         }
     }
-    
+
     @Nonnull
-    private DistributionResponse send(final PackageMessage pkg, int queueSize, int delayMS) throws DistributionException {
+    private DistributionResponse send(final PackageMessage pkg, int queueSize, int delayMS)
+            throws DistributionException {
         try {
             long offset = Timed.timed(publishMetrics.getEnqueuePackageDuration(), () -> this.sendAndWait(pkg));
             publishMetrics.getExportedPackageSize().update(pkg.getPkgLength());
             publishMetrics.getAcceptedRequests().mark();
-            String msg = format("Request accepted with distribution package %s at offset=%d, queueSize=%d, queueSizeDelay=%d", pkg, offset, queueSize, delayMS);
+            String msg = format(
+                    "Request accepted with distribution package %s at offset=%d, queueSize=%d, queueSizeDelay=%d",
+                    pkg, offset, queueSize, delayMS);
             distLog.info(msg);
             return new SimpleDistributionResponse(ACCEPTED, msg, pkg::getPkgId);
         } catch (Throwable e) {
@@ -312,5 +318,4 @@ public class DistributionPublisher implements DistributionAgent {
             throw new RuntimeException(e);
         }
     }
-
 }

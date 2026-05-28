@@ -18,6 +18,11 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
+import java.io.Closeable;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashSet;
+
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.distribution.journal.*;
 import org.apache.sling.distribution.journal.impl.discovery.State;
@@ -38,11 +43,6 @@ import org.junit.Test;
 import org.mockito.*;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.event.EventAdmin;
-
-import java.io.Closeable;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashSet;
 
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.*;
@@ -96,25 +96,21 @@ public class PackageDistributedNotifierTest {
     @Before
     public void before() throws Exception {
         MockitoAnnotations.openMocks(this).close();
-        when(callback.createConsumer(handlerCaptor.capture()))
-                .thenReturn(poller);
+        when(callback.createConsumer(handlerCaptor.capture())).thenReturn(poller);
         when(messagingProvider.createPoller(
-                Mockito.eq(Topics.STATUS_TOPIC),
-                any(Reset.class),
-                statHandlerCaptor.capture()))
+                        Mockito.eq(Topics.STATUS_TOPIC), any(Reset.class), statHandlerCaptor.capture()))
                 .thenReturn(statPoller);
         URI serverURI = new URI("http://myserver.apache.org:1234/somepath");
         when(messagingProvider.getServerUri()).thenReturn(serverURI);
-        when(messagingProvider.createSender(Topics.EVENT_TOPIC))
-            .thenReturn(sender);
+        when(messagingProvider.createSender(Topics.EVENT_TOPIC)).thenReturn(sender);
 
         QueueErrors queueErrors = mock(QueueErrors.class);
-        queueProvider = new PubQueueProviderImpl(eventAdmin, queueErrors,  callback, context);
+        queueProvider = new PubQueueProviderImpl(eventAdmin, queueErrors, callback, context);
         handler = handlerCaptor.getValue();
-        for(int i = 0; i <= 20; i++)
-            handler.handle(info(i), packageMessage("packageid" + i, PUB_AGENT_NAME));
+        for (int i = 0; i <= 20; i++) handler.handle(info(i), packageMessage("packageid" + i, PUB_AGENT_NAME));
 
-        notifier = new PackageDistributedNotifier(eventAdmin, pubQueueCacheService, messagingProvider, resolverFactory, true);
+        notifier = new PackageDistributedNotifier(
+                eventAdmin, pubQueueCacheService, messagingProvider, resolverFactory, true);
     }
 
     @Test
@@ -152,7 +148,8 @@ public class PackageDistributedNotifierTest {
 
         notifier.storeLastDistributedOffset();
 
-        notifier = new PackageDistributedNotifier(eventAdmin, pubQueueCacheService, messagingProvider, resolverFactory, false);
+        notifier = new PackageDistributedNotifier(
+                eventAdmin, pubQueueCacheService, messagingProvider, resolverFactory, false);
         // the last raised offset persisted in the author repository is not considered because `ensureEvent` is disabled
         when(pubQueueCacheService.getOffsetQueue(PUB_AGENT_NAME, 16))
                 .thenReturn(queueProvider.getOffsetQueue(PUB_AGENT_NAME, 16));
@@ -160,7 +157,7 @@ public class PackageDistributedNotifierTest {
         verify(sender, times(3 + 5 + 5)).accept(messageCaptor.capture());
     }
 
-    private TopologyView buildView(State ... state) {
+    private TopologyView buildView(State... state) {
         return new TopologyView(new HashSet<>(asList(state)));
     }
 
@@ -181,5 +178,4 @@ public class PackageDistributedNotifierTest {
                 .deepPaths(Collections.singletonList("deep-path"))
                 .build();
     }
-
 }

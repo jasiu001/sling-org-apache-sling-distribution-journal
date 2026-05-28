@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static org.apache.sling.distribution.journal.HandlerAdapter.create;
-
 import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -33,6 +31,8 @@ import org.apache.sling.distribution.journal.shared.Topics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.distribution.journal.HandlerAdapter.create;
+
 public class CommandPoller implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CommandPoller.class);
 
@@ -40,22 +40,24 @@ public class CommandPoller implements Closeable {
     private final String subAgentName;
     private final Closeable poller;
     private final AtomicLong clearOffset = new AtomicLong(-1);
-	private final Consumer<Long> clearHandler;
+    private final Consumer<Long> clearHandler;
 
-    public CommandPoller(MessagingProvider messagingProvider, String subSlingId, String subAgentName, Long startClearOffset, Consumer<Long> clearHandler) {
+    public CommandPoller(
+            MessagingProvider messagingProvider,
+            String subSlingId,
+            String subAgentName,
+            Long startClearOffset,
+            Consumer<Long> clearHandler) {
         this.subSlingId = subSlingId;
         this.subAgentName = subAgentName;
-		this.clearHandler = clearHandler;
-		if (startClearOffset != null) {
-			clearOffset.set(startClearOffset);
-		}
+        this.clearHandler = clearHandler;
+        if (startClearOffset != null) {
+            clearOffset.set(startClearOffset);
+        }
         this.poller = messagingProvider.createPoller(
-                    Topics.COMMAND_TOPIC,
-                    Reset.earliest,
-                    create(ClearCommand.class, this::handleCommandMessage)
-                    );
+                Topics.COMMAND_TOPIC, Reset.earliest, create(ClearCommand.class, this::handleCommandMessage));
     }
-    
+
     public boolean isCleared(long offset) {
         return offset <= clearOffset.longValue();
     }
@@ -67,9 +69,13 @@ public class CommandPoller implements Closeable {
         }
 
         long oldOffset = clearOffset.get();
-		long newOffset = updateClearOffsetIfLarger(command.getOffset());
-		LOG.info("Handled clear command {}. Old clear offset was {}, new clear offset is {}.", command, oldOffset, newOffset);
-		clearHandler.accept(newOffset);
+        long newOffset = updateClearOffsetIfLarger(command.getOffset());
+        LOG.info(
+                "Handled clear command {}. Old clear offset was {}, new clear offset is {}.",
+                command,
+                oldOffset,
+                newOffset);
+        clearHandler.accept(newOffset);
     }
 
     private long updateClearOffsetIfLarger(long offset) {
@@ -80,5 +86,4 @@ public class CommandPoller implements Closeable {
     public void close() {
         IOUtils.closeQuietly(poller);
     }
-
 }

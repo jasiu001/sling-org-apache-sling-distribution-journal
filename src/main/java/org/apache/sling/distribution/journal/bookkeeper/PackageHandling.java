@@ -19,5 +19,7 @@
 package org.apache.sling.distribution.journal.bookkeeper;
 
 public enum PackageHandling {
-    Off, Extract, Install
+    Off,
+    Extract,
+    Install
 }

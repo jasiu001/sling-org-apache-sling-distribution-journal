@@ -18,12 +18,12 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.sling.distribution.journal.queue.OffsetQueue;
 import org.apache.sling.distribution.queue.DistributionQueueEntry;
@@ -45,7 +45,7 @@ public class PubErrQueue implements DistributionQueue {
 
     private final OffsetQueue<DistributionQueueItem> agentQueue;
 
-    private final  QueueEntryFactory entryFactory;
+    private final QueueEntryFactory entryFactory;
 
     private final OffsetQueue<Long> errorQueue;
 
@@ -137,5 +137,4 @@ public class PubErrQueue implements DistributionQueue {
     public boolean hasCapability(String capability) {
         return false;
     }
-
 }

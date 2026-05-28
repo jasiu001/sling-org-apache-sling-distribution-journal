@@ -18,6 +18,11 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
+import javax.annotation.Nonnull;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.distribution.common.DistributionException;
@@ -30,11 +35,6 @@ import org.apache.sling.distribution.packaging.DistributionPackageBuilder;
 import org.apache.sling.distribution.packaging.DistributionPackageInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 import static org.apache.commons.io.IOUtils.toByteArray;
 import static org.apache.sling.distribution.journal.messages.PackageMessage.ReqType.ADD;
@@ -50,16 +50,13 @@ class PackageHandler {
     private final BinaryStore binaryStore;
 
     public PackageHandler(
-    		DistributionPackageBuilder packageBuilder, 
-    		ContentPackageExtractor extractor,
-            BinaryStore binaryStore) {
+            DistributionPackageBuilder packageBuilder, ContentPackageExtractor extractor, BinaryStore binaryStore) {
         this.packageBuilder = packageBuilder;
         this.extractor = extractor;
         this.binaryStore = binaryStore;
     }
 
-    public void apply(ResourceResolver resolver, PackageMessage pkgMsg)
-            throws DistributionException {
+    public void apply(ResourceResolver resolver, PackageMessage pkgMsg) throws DistributionException {
         DistributionPackage distributionPackage = toDistributionPackage(pkgMsg);
         packageBuilder.installPackage(resolver, distributionPackage);
         ReqType type = pkgMsg.getReqType();
@@ -68,9 +65,8 @@ class PackageHandler {
         }
     }
 
-    private DistributionPackage toDistributionPackage(PackageMessage pkgMsg)
-            throws DistributionException {
-        LOG.debug("Importing paths {}",pkgMsg.getPaths());
+    private DistributionPackage toDistributionPackage(PackageMessage pkgMsg) throws DistributionException {
+        LOG.debug("Importing paths {}", pkgMsg.getPaths());
         final byte[] data;
         try (InputStream inputStream = stream(pkgMsg)) {
             data = toByteArray(inputStream);
@@ -79,7 +75,8 @@ class PackageHandler {
         }
         DistributionPackageInfo distributionPackageInfo = new DistributionPackageInfo(pkgMsg.getPkgType());
         distributionPackageInfo.put(PROPERTY_REQUEST_PATHS, pkgMsg.getPaths().toArray());
-        distributionPackageInfo.put(PROPERTY_REQUEST_DEEP_PATHS, pkgMsg.getDeepPaths().toArray());
+        distributionPackageInfo.put(
+                PROPERTY_REQUEST_DEEP_PATHS, pkgMsg.getDeepPaths().toArray());
         distributionPackageInfo.put(PROPERTY_REQUEST_TYPE, pkgMsg.getReqType());
         return new JournalDistributionPackage(pkgMsg.getPkgId(), pkgMsg.getPkgType(), data, distributionPackageInfo);
     }

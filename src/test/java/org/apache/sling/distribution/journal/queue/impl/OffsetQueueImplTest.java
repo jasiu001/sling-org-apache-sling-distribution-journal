@@ -18,9 +18,6 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -29,15 +26,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 public class OffsetQueueImplTest {
-    
+
     private OffsetQueue<Long> queue;
 
     @Before
     public void before() {
         queue = new OffsetQueueImpl<>();
     }
-    
+
     @Test
     public void testPutGetItem() throws Exception {
         long offset = 100;
@@ -62,7 +62,7 @@ public class OffsetQueueImplTest {
         assertThat(iterator.next(), equalTo(105L));
         assertThat(iterator.next(), equalTo(113L));
         Assert.assertFalse(iterator.hasNext());
-        
+
         Iterator<Long> itemsAll = queue.getHeadItems(1, -1).iterator();
         assertAllItemsPresent(itemsAll);
     }
@@ -81,14 +81,14 @@ public class OffsetQueueImplTest {
         assertAllItemsPresent(iterator);
     }
 
-	private void assertAllItemsPresent(Iterator<Long> iterator) {
-		Assert.assertTrue(iterator.hasNext());
+    private void assertAllItemsPresent(Iterator<Long> iterator) {
+        Assert.assertTrue(iterator.hasNext());
         assertThat(iterator.next(), equalTo(105L));
         assertThat(iterator.next(), equalTo(113L));
         assertThat(iterator.next(), equalTo(155L));
         assertThat(iterator.next(), equalTo(194L));
         Assert.assertFalse(iterator.hasNext());
-	}
+    }
 
     @Test
     public void testIsEmpty() throws Exception {
@@ -142,5 +142,4 @@ public class OffsetQueueImplTest {
             queue.putItem(offset, offset);
         }
     }
-
 }

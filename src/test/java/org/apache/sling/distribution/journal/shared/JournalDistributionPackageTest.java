@@ -18,11 +18,11 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import org.apache.sling.distribution.packaging.DistributionPackageInfo;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.sling.distribution.packaging.DistributionPackageInfo;
+import org.junit.Test;
 
 import static java.util.UUID.randomUUID;
 import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS;
@@ -31,7 +31,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class JournalDistributionPackageTest {
-
 
     @Test
     public void testValues() {
@@ -52,5 +51,4 @@ public class JournalDistributionPackageTest {
         assertEquals(type, pkg.getInfo().getType());
         assertArrayEquals(paths, pkg.getInfo().getPaths());
     }
-
 }

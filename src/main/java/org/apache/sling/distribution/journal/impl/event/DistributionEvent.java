@@ -18,6 +18,16 @@
  */
 package org.apache.sling.distribution.journal.impl.event;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.sling.distribution.journal.messages.PackageMessage;
+import org.apache.sling.distribution.queue.DistributionQueueItem;
+import org.osgi.service.event.Event;
+
 import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_KIND;
 import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME;
 import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_PATHS;
@@ -28,31 +38,23 @@ import static org.apache.sling.distribution.event.DistributionEventTopics.AGENT_
 import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_PATHS;
 import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_TYPE;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.apache.sling.distribution.journal.messages.PackageMessage;
-import org.apache.sling.distribution.queue.DistributionQueueItem;
-import org.osgi.service.event.Event;
-
 @ParametersAreNonnullByDefault
 public class DistributionEvent {
 
     public static final String PACKAGE_ID = "distribution.package.id";
     private static final String KIND_AGENT = "agent";
 
-    private DistributionEvent() {
-    }
-    
+    private DistributionEvent() {}
+
     public static Event eventPackageCreated(PackageMessage pkgMsg, String agentName) {
         return buildEvent(AGENT_PACKAGE_CREATED, KIND_AGENT, agentName, pkgMsg);
     }
 
     public static Event eventPackageDistributed(DistributionQueueItem queueItem, String agentName) {
-        return buildEvent(AGENT_PACKAGE_DISTRIBUTED, KIND_AGENT, agentName,
+        return buildEvent(
+                AGENT_PACKAGE_DISTRIBUTED,
+                KIND_AGENT,
+                agentName,
                 queueItem.get(PROPERTY_REQUEST_TYPE, String.class),
                 queueItem.get(PROPERTY_REQUEST_PATHS, String[].class),
                 queueItem.getPackageId());
@@ -64,13 +66,17 @@ public class DistributionEvent {
 
     private static Event buildEvent(String topic, String kind, String agentName, PackageMessage pkgMsg) {
         List<String> pathsList = pkgMsg.getPaths();
-        return buildEvent(topic, kind, agentName,
+        return buildEvent(
+                topic,
+                kind,
+                agentName,
                 pkgMsg.getReqType().name(),
                 pathsList.toArray(new String[0]),
                 pkgMsg.getPkgId());
     }
 
-    private static Event buildEvent(String topic, String kind, String agentName, String reqType, String[] paths, String packageId) {
+    private static Event buildEvent(
+            String topic, String kind, String agentName, String reqType, String[] paths, String packageId) {
         Map<String, Object> props = new HashMap<>();
         props.put(DISTRIBUTION_COMPONENT_KIND, kind);
         props.put(DISTRIBUTION_COMPONENT_NAME, agentName);
@@ -78,7 +84,5 @@ public class DistributionEvent {
         props.put(DISTRIBUTION_PATHS, paths);
         props.put(PACKAGE_ID, packageId);
         return new Event(topic, props);
-
     }
-
 }

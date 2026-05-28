@@ -23,7 +23,7 @@ import java.util.Objects;
 public class DefaultTag implements Tag {
     private final String key;
     private final String value;
-    
+
     public DefaultTag(String key, String value) {
         super();
         this.key = key;
@@ -45,18 +45,15 @@ public class DefaultTag implements Tag {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
         DefaultTag other = (DefaultTag) obj;
         return Objects.equals(key, other.key) && Objects.equals(value, other.value);
     }
-    
+
     @Override
     public String toString() {
-    	return key + ":"  + value;
+        return key + ":" + value;
     }
 }

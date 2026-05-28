@@ -18,14 +18,14 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.sling.distribution.journal.queue.OffsetQueue;
 
@@ -40,7 +40,7 @@ public class OffsetQueueImpl<T> implements OffsetQueue<T>, OffsetQueueImplMBean 
     public OffsetQueueImpl() {
         this(new ConcurrentSkipListMap<>());
     }
-    
+
     private OffsetQueueImpl(SortedMap<Long, T> entries) {
         this.entries = Objects.requireNonNull(entries);
     }
@@ -78,11 +78,8 @@ public class OffsetQueueImpl<T> implements OffsetQueue<T>, OffsetQueueImplMBean 
     @Nonnull
     @Override
     public Iterable<T> getHeadItems(int skip, int limit) {
-    	int maxSize = limit == -1 ? Integer.MAX_VALUE : limit;
-        return entries.values().stream()
-                .skip(skip)
-                .limit(maxSize)
-                .collect(Collectors.toList());
+        int maxSize = limit == -1 ? Integer.MAX_VALUE : limit;
+        return entries.values().stream().skip(skip).limit(maxSize).collect(Collectors.toList());
     }
 
     @Override
@@ -112,7 +109,7 @@ public class OffsetQueueImpl<T> implements OffsetQueue<T>, OffsetQueueImplMBean 
     public int getSize() {
         return entries.size();
     }
-    
+
     @Nonnull
     @Override
     public OffsetQueue<T> getMinOffsetQueue(long minOffset) {

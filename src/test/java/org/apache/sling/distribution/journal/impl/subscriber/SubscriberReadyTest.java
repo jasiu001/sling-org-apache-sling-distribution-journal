@@ -18,10 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
-import static org.apache.sling.distribution.journal.impl.subscriber.SubscriberReady.MAX_RETRIES;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,6 +28,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.apache.sling.distribution.journal.impl.subscriber.SubscriberReady.MAX_RETRIES;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class SubscriberReadyTest {
 
     private static final int IDLE_MILLIES = 40;
@@ -40,39 +40,46 @@ public class SubscriberReadyTest {
     private static final int TIME_NOW = 1000000;
     private static final int TEN_MINS_AGO = TIME_NOW - 10 * 60 * 1000;
     private static final int NO_RETRIES = 0;
-    
+
     private SubscriberReady idle;
     private AtomicLong timeProvider = new AtomicLong(TIME_NOW);
 
     @Before
     public void before() {
-		BiConsumer<ReadyReason, Duration> readyCallback = (readyReason, duration)->{};
-		idle = new SubscriberReady("publish_subscriber", IDLE_MILLIES, FORCE_IDLE_MILLIS, ACCEPTABLE_AGE_DIFF_MS, new AtomicBoolean(), timeProvider::get, readyCallback);
+        BiConsumer<ReadyReason, Duration> readyCallback = (readyReason, duration) -> {};
+        idle = new SubscriberReady(
+                "publish_subscriber",
+                IDLE_MILLIES,
+                FORCE_IDLE_MILLIS,
+                ACCEPTABLE_AGE_DIFF_MS,
+                new AtomicBoolean(),
+                timeProvider::get,
+                readyCallback);
     }
 
     @After
     public void after() {
         idle.close();
     }
-    
+
     @Test
     public void testIdle() {
         assertThat("Initial state", idle.isReady(), equalTo(false));
         idle.busy(NO_RETRIES, TEN_MINS_AGO);
         idle.idle();
         assertThat("State after reset", idle.isReady(), equalTo(false));
-        
+
         sleep(30);
         assertThat("State after time below idle limit", idle.isReady(), equalTo(false));
         idle.busy(NO_RETRIES, TEN_MINS_AGO);
-        
+
         sleep(80);
         idle.idle();
         assertThat("State after long processing", idle.isReady(), equalTo(false));
-        
+
         sleep(80);
         assertThat("State after time over idle limit", idle.isReady(), equalTo(true));
-        
+
         idle.busy(NO_RETRIES, TEN_MINS_AGO);
         assertThat("State should not be reset once it reached GREEN", idle.isReady(), equalTo(true));
     }
@@ -86,9 +93,9 @@ public class SubscriberReadyTest {
         sleep(FORCE_IDLE_MILLIS * 2);
         assertThat("State after time over idle limit", idle.isReady(), equalTo(true));
         // Observe log to make sure force idle is not logged after becoming ready because of normal idle time
-        
+
     }
-    
+
     @Test
     public void testForceIdle() throws InterruptedException {
         assertThat("Initial state", idle.isReady(), equalTo(false));
@@ -97,22 +104,21 @@ public class SubscriberReadyTest {
         sleep(FORCE_IDLE_MILLIS * 2);
         assertThat("State after time over idle limit", idle.isReady(), equalTo(true));
         // Observe log to make sure force idle is not logged after becoming ready because of normal idle time
-        
+
     }
 
-    
     @Test
     public void testShortIdleTimeButCreateTimeNearCurrentTime() throws InterruptedException {
         assertThat("Initial state", idle.isReady(), equalTo(false));
         idle.busy(NO_RETRIES, TEN_MINS_AGO);
         idle.idle();
         assertThat("State after reset", idle.isReady(), equalTo(false));
-        
+
         idle.busy(NO_RETRIES, TIME_NOW - 1000);
         assertThat("Create time near TIME_NOW should return idle", idle.isReady(), equalTo(true));
     }
 
-    /** 
+    /**
      * In case of blocked queue (retries > MAX_RETRIES) we should report ready
      */
     @Test
@@ -129,7 +135,7 @@ public class SubscriberReadyTest {
         idle.busy(NO_RETRIES, TEN_MINS_AGO);
         assertThat("State should not be reset once it reached idle", idle.isReady(), equalTo(true));
     }
-    
+
     @Test
     public void testStartIdle() throws InterruptedException {
         assertThat("Initial state", idle.isReady(), equalTo(false));
@@ -145,5 +151,4 @@ public class SubscriberReadyTest {
             throw new IllegalStateException("Should not happen");
         }
     }
-    
 }

@@ -27,9 +27,8 @@ import org.slf4j.LoggerFactory;
 
 public final class TaggedMetrics {
     private static Logger log = LoggerFactory.getLogger(TaggedMetrics.class);
-    
-    private TaggedMetrics() {
-    }
+
+    private TaggedMetrics() {}
 
     public static String getMetricName(String metricName, List<Tag> tags) {
         String metric = tags.stream()
@@ -38,7 +37,7 @@ public final class TaggedMetrics {
         log.debug("metric={}", metric);
         return metric;
     }
-    
+
     public static String getMetricName(String metricName, Tag tag) {
         return getMetricName(metricName, Collections.singletonList(tag));
     }

@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.sling.distribution.journal.shared;
 
 import java.text.DateFormat;
@@ -41,7 +40,7 @@ public class DefaultDistributionLog implements DistributionLog {
     private final LinkedList<String> lines = new LinkedList<>();
     private final Logger logger;
     private final LogLevel logLevel;
-    
+
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:SSS");
 
     public DefaultDistributionLog(String name, Class<?> clazz, LogLevel logLevel) {
@@ -73,10 +72,7 @@ public class DefaultDistributionLog implements DistributionLog {
         if (level.cardinal < logLevel.cardinal) {
             return;
         }
-        String log = String.format("%s - %s - %s", 
-                dateFormat.format(new Date().getTime()),
-                level.name(),
-                message);
+        String log = String.format("%s - %s - %s", dateFormat.format(new Date().getTime()), level.name(), message);
         addLine(log);
     }
 
@@ -122,17 +118,14 @@ public class DefaultDistributionLog implements DistributionLog {
         internalLog(LogLevel.WARN, fmt, objects);
     }
 
-
     private String getSpecificString(String fmt) {
         return "[" + name + "] " + fmt;
     }
-
 
     /**
      * Log level
      */
     public enum LogLevel {
-
         DEBUG(0),
 
         INFO(1),

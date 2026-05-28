@@ -18,6 +18,15 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.Test;
+
 import static java.lang.Math.abs;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,15 +36,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.junit.Test;
 
 public class TopologyViewTest {
 
@@ -54,7 +54,7 @@ public class TopologyViewTest {
     static {
         STATES.add(new State(AGENT_NAME_1, SUB_AGENT_ID_1, 0, 0, 0, -1, false));
         STATES.add(new State(AGENT_NAME_2, SUB_AGENT_ID_1, 0, 0, 0, -1, false));
-        STATES.add(new State( AGENT_NAME_1, SUB_AGENT_ID_2, 0, 0, 0, -1, false));
+        STATES.add(new State(AGENT_NAME_1, SUB_AGENT_ID_2, 0, 0, 0, -1, false));
     }
 
     @Test
@@ -83,7 +83,6 @@ public class TopologyViewTest {
         assertNotNull(subAgentIdsP2);
         assertEquals(1, subAgentIdsP2.size());
         assertTrue(subAgentIdsP2.contains(SUB_AGENT_ID_1));
-
     }
 
     @Test
@@ -106,16 +105,14 @@ public class TopologyViewTest {
         Set<State> subStates2 = view.getSubscriberAgentStates(SUB_AGENT_ID_2);
         Set<String> agents2 = subStates2.stream().map(State::getPubAgentName).collect(Collectors.toSet());
         assertThat(agents2, containsInAnyOrder(AGENT_NAME_1));
-
     }
-    
+
     @Test
     public void testMinOffsetByPubAgentName() throws Exception {
         Set<State> states = new HashSet<>(asList(
                 new State(AGENT_NAME_1, SUB_AGENT_ID_1, 0, 1, 0, -1, false),
                 new State(AGENT_NAME_1, SUB_AGENT_ID_2, 0, 4, 0, -1, false),
-                new State(AGENT_NAME_2, SUB_AGENT_ID_1, 0, 5, 0, -1, false)
-                ));
+                new State(AGENT_NAME_2, SUB_AGENT_ID_1, 0, 5, 0, -1, false)));
         TopologyView view = new TopologyView(states);
         Map<String, Long> offsets = view.getMinOffsetByPubAgentName();
         assertThat(offsets.get(AGENT_NAME_1), equalTo(1L));
@@ -130,18 +127,23 @@ public class TopologyViewTest {
 
         assertEquals(
                 buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false)),
-                buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false))
-        );
+                buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false)));
 
         assertEquals(
-                buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false), new State("pub1", "sub2", abs(RAND.nextLong()), 11, 12, -1, false)),
-                buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false), new State("pub1", "sub2", abs(RAND.nextLong()), 11, 12, -1, false))
-        );
+                buildView(
+                        new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false),
+                        new State("pub1", "sub2", abs(RAND.nextLong()), 11, 12, -1, false)),
+                buildView(
+                        new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false),
+                        new State("pub1", "sub2", abs(RAND.nextLong()), 11, 12, -1, false)));
 
         assertEquals(
-                buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false), new State("pub2", "sub1", abs(RAND.nextLong()), 21, 22, -1, false)),
-                buildView(new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false), new State("pub2", "sub1", abs(RAND.nextLong()), 21, 22, -1, false))
-        );
+                buildView(
+                        new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false),
+                        new State("pub2", "sub1", abs(RAND.nextLong()), 21, 22, -1, false)),
+                buildView(
+                        new State("pub1", "sub1", abs(RAND.nextLong()), 1, 2, -1, false),
+                        new State("pub2", "sub1", abs(RAND.nextLong()), 21, 22, -1, false)));
     }
 
     @Test
@@ -151,53 +153,44 @@ public class TopologyViewTest {
 
         assertNotEquals(
                 buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)),
-                buildView(new State("pub1", "sub2", 0, 0, 0, -1, false))
-        );
+                buildView(new State("pub1", "sub2", 0, 0, 0, -1, false)));
+
+        assertNotEquals(buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)), buildView());
+
+        assertNotEquals(buildView(), buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)));
 
         assertNotEquals(
                 buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)),
-                buildView()
-        );
-
-        assertNotEquals(
-                buildView(),
-                buildView(new State("pub1", "sub1", 0, 0, 0, -1, false))
-        );
+                buildView(new State("pub2", "sub1", 0, 0, 0, -1, false)));
 
         assertNotEquals(
                 buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)),
-                buildView(new State("pub2", "sub1", 0, 0, 0, -1, false))
-        );
-
-        assertNotEquals(
-                buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)),
-                buildView(new State("pub1", "sub1", 0, 0, 0, -1, false), new State("pub2", "sub1", 0, 0, 0, -1, false))
-        );
+                buildView(
+                        new State("pub1", "sub1", 0, 0, 0, -1, false), new State("pub2", "sub1", 0, 0, 0, -1, false)));
 
         assertNotEquals(
                 buildView(new State("pub1", "sub1", 0, 0, 0, -1, false), new State("pub2", "sub1", 0, 0, 0, -1, false)),
-                buildView(new State("pub1", "sub1", 0, 0, 0, -1, false))
-        );
+                buildView(new State("pub1", "sub1", 0, 0, 0, -1, false)));
 
         assertNotEquals(
                 buildView(new State("pub1", "sub1", 0, 0, rand, -1, false)),
-                buildView(new State("pub1", "sub1", 0, 0, rand + 1, -1, false))
-        );
+                buildView(new State("pub1", "sub1", 0, 0, rand + 1, -1, false)));
 
         assertNotEquals(
                 buildView(new State("pub1", "sub1", 0, rand, 0, -1, false)),
-                buildView(new State("pub1", "sub1", 0, rand + 1, 0, -1, false))
-        );
-
+                buildView(new State("pub1", "sub1", 0, rand + 1, 0, -1, false)));
     }
 
     @Test
     public void testToString() {
-        TopologyView view = new TopologyView(Collections.singleton(new State(AGENT_NAME_1, SUB_AGENT_ID_1, 1, 2, 3, -1, false)));
-        assertEquals("{\"states\":[{\"timestamp\":1,\"offset\":2,\"retries\":3,\"maxRetries\":-1,\"editable\":false,\"pubAgentName\":\"agent1\",\"subAgentId\":\"subAgentId1\"}]}", view.toString());
+        TopologyView view =
+                new TopologyView(Collections.singleton(new State(AGENT_NAME_1, SUB_AGENT_ID_1, 1, 2, 3, -1, false)));
+        assertEquals(
+                "{\"states\":[{\"timestamp\":1,\"offset\":2,\"retries\":3,\"maxRetries\":-1,\"editable\":false,\"pubAgentName\":\"agent1\",\"subAgentId\":\"subAgentId1\"}]}",
+                view.toString());
     }
 
-    private TopologyView buildView(State ... state) {
+    private TopologyView buildView(State... state) {
         return new TopologyView(new HashSet<>(asList(state)));
     }
 }

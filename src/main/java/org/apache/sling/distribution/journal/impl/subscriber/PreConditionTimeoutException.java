@@ -24,5 +24,4 @@ public class PreConditionTimeoutException extends RuntimeException {
     }
 
     private static final long serialVersionUID = 6286011641627241560L;
-
 }

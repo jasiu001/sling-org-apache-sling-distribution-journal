@@ -18,12 +18,12 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.sling.distribution.agent.DistributionAgentState;
 import org.apache.sling.distribution.agent.spi.DistributionAgent;
@@ -37,9 +37,8 @@ import static org.apache.sling.distribution.agent.DistributionAgentState.RUNNING
 
 @ParametersAreNonnullByDefault
 public class AgentState {
-    
-    private AgentState() {
-    }
+
+    private AgentState() {}
 
     @Nonnull
     public static DistributionAgentState getState(DistributionAgent agent) {
@@ -62,7 +61,7 @@ public class AgentState {
     }
 
     private static boolean queueNotEmpty(DistributionQueueStatus queueStatus) {
-        return ! queueStatus.isEmpty();
+        return !queueStatus.isEmpty();
     }
 
     private static boolean isBlocked(DistributionQueueStatus queueStatus) {

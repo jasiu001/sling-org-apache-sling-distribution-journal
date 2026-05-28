@@ -18,10 +18,10 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
-import java.util.Objects;
-
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.annotation.concurrent.Immutable;
+
+import java.util.Objects;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -45,7 +45,14 @@ public class State {
 
     private final int maxRetries;
 
-    public State(String pubAgentName, String subAgentId, long timestamp, long offset, int retries, int maxRetries, boolean editable) {
+    public State(
+            String pubAgentName,
+            String subAgentId,
+            long timestamp,
+            long offset,
+            int retries,
+            int maxRetries,
+            boolean editable) {
         this.pubAgentName = pubAgentName;
         this.subAgentId = subAgentId;
         this.timestamp = timestamp;
@@ -58,7 +65,7 @@ public class State {
     public String getPubAgentName() {
         return pubAgentName;
     }
-    
+
     public String getSubAgentId() {
         return subAgentId;
     }
@@ -93,12 +100,12 @@ public class State {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         State state = (State) o;
-        return offset == state.offset &&
-                retries == state.retries &&
-                maxRetries == state.maxRetries &&
-                editable == state.editable &&
-                Objects.equals(pubAgentName, state.pubAgentName) &&
-                Objects.equals(subAgentId, state.subAgentId);
+        return offset == state.offset
+                && retries == state.retries
+                && maxRetries == state.maxRetries
+                && editable == state.editable
+                && Objects.equals(pubAgentName, state.pubAgentName)
+                && Objects.equals(subAgentId, state.subAgentId);
     }
 
     @Override

@@ -20,7 +20,10 @@ package org.apache.sling.distribution.journal.impl.precondition;
 
 import org.osgi.service.component.annotations.Component;
 
-@Component(immediate = true, service = Precondition.class, property = { "name=default" })
+@Component(
+        immediate = true,
+        service = Precondition.class,
+        property = {"name=default"})
 public class DefaultPrecondition implements Precondition {
     @Override
     public Decision canProcess(String subAgentName, long pkgOffset) {

@@ -25,36 +25,40 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CurrentImportInfo {
-	private final Logger log = LoggerFactory.getLogger(CurrentImportInfo.class);
-	public static final Duration IMPORT_TIME_WARN_LEVEL = Duration.ofMinutes(5);
+    private final Logger log = LoggerFactory.getLogger(CurrentImportInfo.class);
+    public static final Duration IMPORT_TIME_WARN_LEVEL = Duration.ofMinutes(5);
 
-	private final PackageMessage pkgMsg;
-	private final long offset;
-	private final long startTime;
+    private final PackageMessage pkgMsg;
+    private final long offset;
+    private final long startTime;
 
-	public CurrentImportInfo(PackageMessage pkgMsg, long offset, long importStartTime) {
-		this.pkgMsg = pkgMsg;
-		this.offset = offset;
-		this.startTime = importStartTime;
-	}
+    public CurrentImportInfo(PackageMessage pkgMsg, long offset, long importStartTime) {
+        this.pkgMsg = pkgMsg;
+        this.offset = offset;
+        this.startTime = importStartTime;
+    }
 
-	public PackageMessage getPkgMsg() {
-		return pkgMsg;
-	}
+    public PackageMessage getPkgMsg() {
+        return pkgMsg;
+    }
 
-	public long getOffset() {
-		return offset;
-	}
+    public long getOffset() {
+        return offset;
+    }
 
-	public long getImportStartTime() {
-		return startTime;
-	}
+    public long getImportStartTime() {
+        return startTime;
+    }
 
     Long getCurrentImportDuration() {
         long currentImportDurationMs = System.currentTimeMillis() - startTime;
         if (currentImportDurationMs > IMPORT_TIME_WARN_LEVEL.toMillis()) {
-            log.warn("Import of package={}, offset={} takes currentImportTimeSeconds={} which is longer than warnLevelSeconds={}", 
-            		pkgMsg, offset, currentImportDurationMs / 1000, IMPORT_TIME_WARN_LEVEL.toSeconds());
+            log.warn(
+                    "Import of package={}, offset={} takes currentImportTimeSeconds={} which is longer than warnLevelSeconds={}",
+                    pkgMsg,
+                    offset,
+                    currentImportDurationMs / 1000,
+                    IMPORT_TIME_WARN_LEVEL.toSeconds());
         }
         return currentImportDurationMs;
     }

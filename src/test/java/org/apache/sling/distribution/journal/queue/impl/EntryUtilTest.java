@@ -18,23 +18,25 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.HashMap;
 
 import org.apache.sling.distribution.queue.DistributionQueueItem;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class EntryUtilTest {
 
     @SuppressWarnings("serial")
-	@Test
+    @Test
     public void testEntryOffset() throws Exception {
-        DistributionQueueItem queueItem = new DistributionQueueItem("packageId", new HashMap<String, Object>(){{
-            put("recordTopic", "topic");
-            put("recordPartition", 0);
-            put("recordOffset", 100);
-        }});
+        DistributionQueueItem queueItem = new DistributionQueueItem("packageId", new HashMap<String, Object>() {
+            {
+                put("recordTopic", "topic");
+                put("recordPartition", 0);
+                put("recordOffset", 100);
+            }
+        });
         assertEquals("topic-0@100", EntryUtil.entryId(queueItem));
     }
 
@@ -48,5 +50,4 @@ public class EntryUtilTest {
     public void testIllegalEntryId() throws Exception {
         EntryUtil.entryOffset("illegal-0");
     }
-
 }

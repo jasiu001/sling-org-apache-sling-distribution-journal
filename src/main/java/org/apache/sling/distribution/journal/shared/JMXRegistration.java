@@ -18,21 +18,21 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Hashtable;
 
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
 
 public class JMXRegistration implements Closeable {
     public static final String DOMAIN = "org.apache.sling.distribution";
 
     private ObjectName name;
-    
+
     public JMXRegistration(Object bean, String type, String id) {
         try {
             this.name = nameOf(type, id);
@@ -44,7 +44,7 @@ public class JMXRegistration implements Closeable {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
-    
+
     public static ObjectName nameOf(String type, String id) throws MalformedObjectNameException {
         Hashtable<String, String> props = new Hashtable<>();
         props.put("type", type);
@@ -59,5 +59,4 @@ public class JMXRegistration implements Closeable {
             throw new IOException(e.getMessage(), e);
         }
     }
-
 }

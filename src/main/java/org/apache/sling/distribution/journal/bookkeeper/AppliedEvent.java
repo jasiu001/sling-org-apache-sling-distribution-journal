@@ -18,19 +18,19 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_KIND;
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME;
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_PATHS;
-import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_TYPE;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.sling.distribution.event.DistributionEventTopics;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
 import org.osgi.service.event.Event;
+
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_KIND;
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_COMPONENT_NAME;
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_PATHS;
+import static org.apache.sling.distribution.event.DistributionEventProperties.DISTRIBUTION_TYPE;
 
 @ParametersAreNonnullByDefault
 class AppliedEvent {
@@ -44,7 +44,7 @@ class AppliedEvent {
         this.pkgMsg = pkgMsg;
         this.agentName = agentName;
     }
-    
+
     Event toEvent() {
         String[] paths = pkgMsg.getPaths().toArray(new String[0]);
         Map<String, Object> props = new HashMap<>();
@@ -55,5 +55,4 @@ class AppliedEvent {
         props.put(PACKAGE_ID, pkgMsg.getPkgId());
         return new Event(DistributionEventTopics.IMPORTER_PACKAGE_IMPORTED, props);
     }
-
 }

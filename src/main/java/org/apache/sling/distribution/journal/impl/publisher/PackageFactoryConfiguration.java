@@ -21,11 +21,14 @@ package org.apache.sling.distribution.journal.impl.publisher;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@ObjectClassDefinition(name = "Apache Sling Journal based Distribution - Package Factory Configuration",
+@ObjectClassDefinition(
+        name = "Apache Sling Journal based Distribution - Package Factory Configuration",
         description = "Apache Sling Content Distribution Package Factory Configuration")
 public @interface PackageFactoryConfiguration {
 
-    @AttributeDefinition(name = "Max Package Size",
-            description = "Max package sizes in Byte to be accepted for distribution. Use a negative value to accept all packages. Default is -1 (disabled)")
+    @AttributeDefinition(
+            name = "Max Package Size",
+            description =
+                    "Max package sizes in Byte to be accepted for distribution. Use a negative value to accept all packages. Default is -1 (disabled)")
     long maxPackageSize() default -1;
 }

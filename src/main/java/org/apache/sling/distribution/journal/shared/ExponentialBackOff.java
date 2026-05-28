@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import java.io.Closeable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,9 +28,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * Retry with exponential backoff.
- * 
+ *
  * Calls checkCallback until it does not throw an Exception.
  * Retries are first done with startDelay, then doubled until maxDelay is reached.
  */
@@ -46,7 +46,7 @@ public class ExponentialBackOff implements Closeable {
 
     private final ScheduledExecutorService executor;
     private final AtomicBoolean isScheduled;
-    
+
     private long currentMaxDelay;
     private long lastCheck;
 
@@ -80,7 +80,7 @@ public class ExponentialBackOff implements Closeable {
         }
         log.info("Shutdown completed");
     }
-    
+
     public void startChecks() {
         if (noRecentErrors()) {
             log.info("No recent errors. Starting with initial delay {}", this.startDelay);
@@ -91,7 +91,7 @@ public class ExponentialBackOff implements Closeable {
 
     private boolean noRecentErrors() {
         long timeSinceLastError = System.currentTimeMillis() - this.lastCheck;
-        return timeSinceLastError  > this.currentMaxDelay * 2;
+        return timeSinceLastError > this.currentMaxDelay * 2;
     }
 
     private synchronized void scheduleCheck() {

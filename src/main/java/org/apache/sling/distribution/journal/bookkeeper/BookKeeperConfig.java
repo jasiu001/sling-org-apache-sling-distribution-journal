@@ -31,56 +31,57 @@ public class BookKeeperConfig {
     private final String commandNodeName;
     private final boolean extractorOverwriteFolderPrimaryTypes;
 
-    public BookKeeperConfig(String subAgentName,
+    public BookKeeperConfig(
+            String subAgentName,
             String subSlingId,
-            boolean editable, 
+            boolean editable,
             int maxRetries,
-            PackageHandling packageHandling, 
+            PackageHandling packageHandling,
             String packageNodeName,
-            String commandNodeName, 
+            String commandNodeName,
             boolean extractorOverwriteFolderPrimaryTypes) {
-                this.subAgentName = subAgentName;
-                this.subSlingId = subSlingId;
-                this.editable = editable;
-                this.maxRetries = maxRetries;
-                this.packageHandling = packageHandling;
-                this.packageNodeName = packageNodeName;
-				this.commandNodeName = commandNodeName;
-                this.extractorOverwriteFolderPrimaryTypes = extractorOverwriteFolderPrimaryTypes;
+        this.subAgentName = subAgentName;
+        this.subSlingId = subSlingId;
+        this.editable = editable;
+        this.maxRetries = maxRetries;
+        this.packageHandling = packageHandling;
+        this.packageNodeName = packageNodeName;
+        this.commandNodeName = commandNodeName;
+        this.extractorOverwriteFolderPrimaryTypes = extractorOverwriteFolderPrimaryTypes;
     }
-    
+
     public String getSubAgentName() {
         return subAgentName;
     }
-    
+
     public String getSubSlingId() {
         return subSlingId;
     }
-    
+
     public boolean isEditable() {
         return editable;
     }
-    
+
     public int getMaxRetries() {
         return maxRetries;
     }
-    
+
     public PackageHandling getPackageHandling() {
         return packageHandling;
     }
-    
+
     public String getPackageNodeName() {
         return packageNodeName;
     }
 
     public String getCommandNodeName() {
-		return commandNodeName;
-	}
-    
+        return commandNodeName;
+    }
+
     public boolean shouldExtractorOverwriteFolderPrimaryTypes() {
         return extractorOverwriteFolderPrimaryTypes;
     }
-    
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)

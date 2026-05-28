@@ -30,7 +30,7 @@ public final class Delay {
     public void await(long delayInMs) {
         synchronized (delayer) {
             try {
-                delayer.wait(delayInMs); //NOSONAR
+                delayer.wait(delayInMs); // NOSONAR
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -46,5 +46,4 @@ public final class Delay {
     public static LongSupplier exponential(long startDelay, long maxDelay) {
         return iterate(startDelay, delay -> min(2 * delay, maxDelay)).iterator()::next;
     }
-
 }

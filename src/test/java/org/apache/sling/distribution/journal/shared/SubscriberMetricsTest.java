@@ -18,9 +18,6 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.when;
-
 import org.apache.sling.commons.metrics.Counter;
 import org.apache.sling.commons.metrics.Histogram;
 import org.apache.sling.commons.metrics.Meter;
@@ -34,9 +31,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class SubscriberMetricsTest {
-    
+
     SubscriberMetrics metrics;
 
     @Before

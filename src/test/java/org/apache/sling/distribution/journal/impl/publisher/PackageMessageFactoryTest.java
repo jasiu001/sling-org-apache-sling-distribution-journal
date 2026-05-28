@@ -45,8 +45,8 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.apache.sling.distribution.DistributionRequestType.ADD;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 import static org.osgi.util.converter.Converters.standardConverter;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -71,16 +71,13 @@ public class PackageMessageFactoryTest {
     @InjectMocks
     private final PackageMessageFactory factory = new PackageMessageFactory();
 
-
     @Before
     public void before() throws DistributionException {
         when(packageBuilder.createPackage(any(ResourceResolver.class), any(DistributionRequest.class)))
                 .thenReturn(distributionPackage);
-        when(slingSettingsService.getSlingId())
-                .thenReturn(UUID.randomUUID().toString());
+        when(slingSettingsService.getSlingId()).thenReturn(UUID.randomUUID().toString());
 
-        when(distributionPackage.getInfo())
-                .thenReturn(buildPackageInfo());
+        when(distributionPackage.getInfo()).thenReturn(buildPackageInfo());
     }
 
     @Test(expected = DistributionException.class)
@@ -96,15 +93,14 @@ public class PackageMessageFactoryTest {
 
     @Test
     public void testAddPkgNoLimit() throws Exception {
-        PackageFactoryConfiguration config = standardConverter()
-                .convert(emptyMap())
-                .to(PackageFactoryConfiguration.class);
+        PackageFactoryConfiguration config =
+                standardConverter().convert(emptyMap()).to(PackageFactoryConfiguration.class);
         factory.activate(config);
-        when(distributionPackage.createInputStream())
-                .thenReturn(new ByteArrayInputStream(new byte[10_000_000]));
+        when(distributionPackage.createInputStream()).thenReturn(new ByteArrayInputStream(new byte[10_000_000]));
         when(distributionPackage.getSize()).thenReturn(10_000_000L);
         DistributionRequest request = new SimpleDistributionRequest(ADD, "/some/path");
-        assertNotNull(factory.create(packageBuilder, resolverFactory.getServiceResourceResolver(null), PUB_AGENT_NAME, request));
+        assertNotNull(factory.create(
+                packageBuilder, resolverFactory.getServiceResourceResolver(null), PUB_AGENT_NAME, request));
     }
 
     private DistributionPackageInfo buildPackageInfo() {
@@ -113,5 +109,4 @@ public class PackageMessageFactoryTest {
         props.put(DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS, "/some/path");
         return new DistributionPackageInfo("packageType", props);
     }
-
 }

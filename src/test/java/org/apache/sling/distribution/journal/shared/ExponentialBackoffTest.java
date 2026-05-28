@@ -18,11 +18,6 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static java.time.Duration.of;
-import static java.time.temporal.ChronoUnit.MILLIS;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -33,20 +28,25 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.time.Duration.of;
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @RunWith(MockitoJUnitRunner.class)
 public class ExponentialBackoffTest {
     private static final int RETRIES = 5;
     private static final long INITIAL_DELAY = of(64, MILLIS).toMillis();
     private static final long MAX_DELAY = of(256, MILLIS).toMillis();
     private static final long LONG_DELAY = of(5, ChronoUnit.SECONDS).toMillis();
-    
+
     private Logger log = LoggerFactory.getLogger(this.getClass());
-    
+
     private volatile CountDownLatch countDown = new CountDownLatch(RETRIES);
-    
+
     @Test
     public void testRetries() throws Exception {
-        
+
         log.info("Checking exponentional backoff");
         ExponentialBackOff backOff = new ExponentialBackOff(INITIAL_DELAY, MAX_DELAY, false, this::checkCallback);
         backOff.startChecks();
@@ -71,9 +71,9 @@ public class ExponentialBackoffTest {
 
         backOff.close();
     }
-    
+
     /**
-     * Even with a scheduled check the shutdown is expected to be 
+     * Even with a scheduled check the shutdown is expected to be
      * fast and to clean up its thread
      */
     @Test(timeout = 500)
@@ -82,7 +82,7 @@ public class ExponentialBackoffTest {
         backoff.startChecks();
         backoff.close(); // We expect this to finish in less than the test timeout
     }
-    
+
     private void checkCallback() {
         this.countDown.countDown();
         if (countDown.getCount() > 0) {

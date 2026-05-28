@@ -18,9 +18,9 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_CONCURRENT;
-import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_PERIOD;
-import static org.apache.sling.distribution.journal.metrics.TaggedMetrics.getMetricName;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.util.Dictionary;
 import java.util.HashSet;
@@ -34,10 +34,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.commons.metrics.MetricsService;
@@ -45,9 +41,9 @@ import org.apache.sling.commons.metrics.Timer;
 import org.apache.sling.commons.scheduler.Scheduler;
 import org.apache.sling.distribution.journal.MessageInfo;
 import org.apache.sling.distribution.journal.impl.publisher.PackageQueuedNotifier;
+import org.apache.sling.distribution.journal.impl.publisher.PublishMetrics;
 import org.apache.sling.distribution.journal.messages.PackageStatusMessage;
 import org.apache.sling.distribution.journal.messages.PackageStatusMessage.Status;
-import org.apache.sling.distribution.journal.impl.publisher.PublishMetrics;
 import org.apache.sling.distribution.journal.metrics.Tag;
 import org.apache.sling.distribution.journal.queue.CacheCallback;
 import org.apache.sling.distribution.journal.queue.ClearCallback;
@@ -64,18 +60,22 @@ import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_CONCURRENT;
+import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_PERIOD;
+import static org.apache.sling.distribution.journal.metrics.TaggedMetrics.getMetricName;
+
 @ParametersAreNonnullByDefault
 public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
 
     static final long QUEUE_SIZE_REFRESH_INTERVAL_SECONDS = 30;
 
     private static final Logger LOG = LoggerFactory.getLogger(PubQueueProviderImpl.class);
-    
+
     private final PackageQueuedNotifier queuedNotifier;
 
     private final CacheCallback callback;
-    
-    private volatile PubQueueCache cache; //NOSONAR
+
+    private volatile PubQueueCache cache; // NOSONAR
 
     private final QueueErrors queueErrors;
 
@@ -93,11 +93,16 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
 
     private ServiceRegistration<?> reg;
 
-    public PubQueueProviderImpl(EventAdmin eventAdmin, QueueErrors queueErrors, CacheCallback callback, BundleContext context) {
+    public PubQueueProviderImpl(
+            EventAdmin eventAdmin, QueueErrors queueErrors, CacheCallback callback, BundleContext context) {
         this(eventAdmin, queueErrors, callback, context, null);
     }
 
-    public PubQueueProviderImpl(EventAdmin eventAdmin, QueueErrors queueErrors, CacheCallback callback, BundleContext context,
+    public PubQueueProviderImpl(
+            EventAdmin eventAdmin,
+            QueueErrors queueErrors,
+            CacheCallback callback,
+            BundleContext context,
             @Nullable MetricsService metricsService) {
         queuedNotifier = new PackageQueuedNotifier(eventAdmin);
         this.queueErrors = queueErrors;
@@ -109,16 +114,16 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
             t.setDaemon(true);
             return t;
         });
-        queueSizeExecutor.scheduleAtFixedRate(this::refreshQueueSizes,
-                0, QUEUE_SIZE_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        queueSizeExecutor.scheduleAtFixedRate(
+                this::refreshQueueSizes, 0, QUEUE_SIZE_REFRESH_INTERVAL_SECONDS, TimeUnit.SECONDS);
         startCleanupTask(context);
         LOG.info("Started Publisher queue provider service");
     }
-    
+
     private void startCleanupTask(BundleContext context) {
         Dictionary<String, Object> props = new Hashtable<>();
         props.put(PROPERTY_SCHEDULER_CONCURRENT, false);
-        props.put(PROPERTY_SCHEDULER_PERIOD, 12*60*60L); // every 12 h
+        props.put(PROPERTY_SCHEDULER_PERIOD, 12 * 60 * 60L); // every 12 h
         props.put(Scheduler.PROPERTY_SCHEDULER_THREAD_POOL, DistributionThreadPool.THREAD_POOL_NAME);
         reg = context.registerService(Runnable.class.getName(), this, props);
     }
@@ -141,7 +146,7 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
         IOUtils.closeQuietly(queuedNotifier);
         LOG.info("Stopped Publisher queue provider service");
     }
-    
+
     @Override
     public void run() {
         LOG.info("Starting package cache cleanup task");
@@ -154,7 +159,7 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
         }
         LOG.info("Stopping package cache cleanup task");
     }
-    
+
     @Nonnull
     @Override
     public Set<String> getQueueNames(String pubAgentName) {
@@ -207,9 +212,8 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
 
     @Nullable
     private DistributionQueue buildAggregatedQueue(String pubAgentName, String virtualQueueName, boolean persisted) {
-        Optional<Long> minLastProcessed = persisted
-                ? getMinQueueOffsetForCohort(pubAgentName, true)
-                : getMinLastProcessedOffsetAll(pubAgentName);
+        Optional<Long> minLastProcessed =
+                persisted ? getMinQueueOffsetForCohort(pubAgentName, true) : getMinLastProcessedOffsetAll(pubAgentName);
         if (!minLastProcessed.isPresent()) {
             return null;
         }
@@ -225,7 +229,11 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
         OffsetQueue<DistributionQueueItem> agentQueue = getOffsetQueue(pubAgentName, minOffset);
         Throwable error = queueErrors.getError(pubAgentName, stragglerId.get());
         ClearCallback clearCallback = persisted ? offset -> clearAllClearableSubscribers(pubAgentName, offset) : null;
-        return new PubQueue(virtualQueueName, agentQueue.getMinOffsetQueue(minOffset), state.getHeadRetries(), error,
+        return new PubQueue(
+                virtualQueueName,
+                agentQueue.getMinOffsetQueue(minOffset),
+                state.getHeadRetries(),
+                error,
                 clearCallback);
     }
 
@@ -287,7 +295,12 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
             long minOffset = state.getLastProcessedOffset() + 1; // Start from offset after last processed
             OffsetQueue<DistributionQueueItem> agentQueue = getOffsetQueue(pubAgentName, minOffset);
             Throwable error = queueErrors.getError(pubAgentName, queueName);
-            return new PubQueue(queueName, agentQueue.getMinOffsetQueue(minOffset), state.getHeadRetries(), error, state.getClearCallback());
+            return new PubQueue(
+                    queueName,
+                    agentQueue.getMinOffsetQueue(minOffset),
+                    state.getHeadRetries(),
+                    error,
+                    state.getClearCallback());
         }
     }
 
@@ -316,7 +329,6 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
             throw new RuntimeException(e);
         }
     }
-    
 
     @Override
     public int getMaxQueueSize(String pubAgentName, boolean clearable) {
@@ -327,7 +339,9 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
     private int computeMaxQueueSize(String pubAgentName, boolean clearableCohort) {
         Optional<Long> minOffset = getMinQueueOffsetForCohort(pubAgentName, clearableCohort);
         if (minOffset.isPresent()) {
-            return getOffsetQueue(pubAgentName, minOffset.get()).getMinOffsetQueue(minOffset.get()).getSize();
+            return getOffsetQueue(pubAgentName, minOffset.get())
+                    .getMinOffsetQueue(minOffset.get())
+                    .getSize();
         }
         return 0;
     }
@@ -364,9 +378,9 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
 
     private Optional<Long> getMinQueueOffsetForCohort(String pubAgentName, boolean clearableCohort) {
         return callback.getSubscribedAgentIds(pubAgentName).stream()
-            .filter(subAgentName -> inClearableCohort(pubAgentName, subAgentName, clearableCohort))
-            .map(subAgentName -> lastProcessedOffset(pubAgentName, subAgentName))
-            .min(Long::compare);
+                .filter(subAgentName -> inClearableCohort(pubAgentName, subAgentName, clearableCohort))
+                .map(subAgentName -> lastProcessedOffset(pubAgentName, subAgentName))
+                .min(Long::compare);
     }
 
     /**
@@ -387,12 +401,13 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
 
     public void handleStatus(MessageInfo info, PackageStatusMessage message) {
         if (message.getStatus() == Status.REMOVED_FAILED) {
-            String errorQueueKey = getErrorQueueKey(message.getPubAgentName(), message.getSubSlingId(), message.getSubAgentName());
+            String errorQueueKey =
+                    getErrorQueueKey(message.getPubAgentName(), message.getSubSlingId(), message.getSubAgentName());
             OffsetQueue<Long> errorQueue = errorQueues.computeIfAbsent(errorQueueKey, key -> new OffsetQueueImpl<>());
             errorQueue.putItem(info.getOffset(), message.getOffset());
         }
     }
-    
+
     private String getErrorQueueKey(String pubAgentName, String subSlingId, String subAgentName) {
         return String.format("%s#%s#%s", pubAgentName, subSlingId, subAgentName);
     }
@@ -405,5 +420,4 @@ public class PubQueueProviderImpl implements PubQueueProvider, Runnable {
         volatile int clearable;
         volatile int nonClearable;
     }
-
 }

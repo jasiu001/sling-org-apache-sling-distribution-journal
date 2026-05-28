@@ -18,16 +18,16 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.sling.distribution.journal.impl.publisher.DistributionPublisher;
 import org.apache.sling.distribution.journal.shared.DefaultDistributionLog.LogLevel;
 import org.junit.Test;
+
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class DefaultDistributionLogTest {
 
@@ -43,7 +43,7 @@ public class DefaultDistributionLogTest {
         System.out.println(time1);
         assertThat("Times of log entries must be different " + time1 + " " + time2, time1, not(equalTo(time2)));
     }
-    
+
     String getTime(String logLine) {
         return logLine.split(" ")[1];
     }

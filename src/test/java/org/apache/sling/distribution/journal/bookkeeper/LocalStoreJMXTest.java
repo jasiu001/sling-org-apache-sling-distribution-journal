@@ -18,15 +18,10 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
-import java.lang.management.ManagementFactory;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
+import java.lang.management.ManagementFactory;
 
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
@@ -43,15 +38,20 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.osgi.framework.BundleContext;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
+
 @RunWith(MockitoJUnitRunner.class)
 public class LocalStoreJMXTest {
-    
+
     private LocalStoreJMX resetOffsets;
-    
+
     private ResourceResolverFactory resolverFactory;
 
     private BundleContext context;
-    
+
     @Before
     public void before() {
         context = MockOsgi.newBundleContext();
@@ -63,7 +63,7 @@ public class LocalStoreJMXTest {
 
     @Test
     public void testResetViaService() throws LoginException, PersistenceException {
-        try ( ResourceResolver resolver = resolverFactory.getServiceResourceResolver(null)) {
+        try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(null)) {
             ResourceUtil.getOrCreateResource(resolver, LocalStore.ROOT_PATH, "sling:Folder", "sling:Folder", true);
         }
         LocalStore store = new LocalStore(resolverFactory, "package", "publish");
@@ -77,10 +77,10 @@ public class LocalStoreJMXTest {
             assertThat(e.getMessage(), containsString("Possibly the stores were reset"));
         }
     }
-    
+
     @Test
     public void testResetViaJMX() throws Exception {
-        try ( ResourceResolver resolver = resolverFactory.getServiceResourceResolver(null)) {
+        try (ResourceResolver resolver = resolverFactory.getServiceResourceResolver(null)) {
             ResourceUtil.getOrCreateResource(resolver, LocalStore.ROOT_PATH, "sling:Folder", "sling:Folder", true);
         }
         LocalStore store = new LocalStore(resolverFactory, "package", "publish");

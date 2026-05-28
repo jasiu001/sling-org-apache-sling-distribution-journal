@@ -18,6 +18,8 @@
  */
 package org.apache.sling.distribution.journal.impl.subscriber;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.io.Closeable;
 import java.util.List;
 import java.util.Objects;
@@ -27,8 +29,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.sling.distribution.journal.bookkeeper.BookKeeper;
 import org.apache.sling.distribution.journal.messages.DiscoveryMessage;
@@ -58,14 +58,15 @@ class Announcer implements Runnable, Closeable {
 
     private final ScheduledExecutorService executor;
 
-    public Announcer(String subSlingId,
-                     String subAgentName,
-                     Set<String> pubAgentNames,
-                     Consumer<DiscoveryMessage> disSender,
-                     BookKeeper bookKeeper,
-                     int maxRetries,
-                     boolean editable,
-                     int announceDelay) {
+    public Announcer(
+            String subSlingId,
+            String subAgentName,
+            Set<String> pubAgentNames,
+            Consumer<DiscoveryMessage> disSender,
+            BookKeeper bookKeeper,
+            int maxRetries,
+            boolean editable,
+            int announceDelay) {
         this.subSlingId = Objects.requireNonNull(subSlingId);
         this.subAgentName = Objects.requireNonNull(subAgentName);
         this.pubAgentNames = Objects.requireNonNull(pubAgentNames);
@@ -95,10 +96,9 @@ class Announcer implements Runnable, Closeable {
                 .maxRetries(maxRetries)
                 .build();
         List<SubscriberState> states = pubAgentNames.stream()
-            .map(pubAgentName -> subscriberState(pubAgentName, offset))
-            .collect(Collectors.toList());
-        return DiscoveryMessage
-                .builder()
+                .map(pubAgentName -> subscriberState(pubAgentName, offset))
+                .collect(Collectors.toList());
+        return DiscoveryMessage.builder()
                 .subSlingId(subSlingId)
                 .subAgentName(subAgentName)
                 .subscriberConfiguration(subscriberConfiguration)

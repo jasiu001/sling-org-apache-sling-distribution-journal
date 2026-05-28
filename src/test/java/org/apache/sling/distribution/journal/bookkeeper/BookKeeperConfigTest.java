@@ -18,33 +18,25 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class BookKeeperConfigTest {
 
     @Test
     public void testToString() {
         BookKeeperConfig bookKeeperConfig = new BookKeeperConfig(
-                "subAgentName",
-                "subSlingId",
-                true,
-                10,
-                PackageHandling.Extract,
-                "package",
-                "command",
-                true);
+                "subAgentName", "subSlingId", true, 10, PackageHandling.Extract, "package", "command", true);
 
         assertEquals(
                 bookKeeperConfig.toString(),
-                "{\"subAgentName\":\"subAgentName\"," +
-                "\"subSlingId\":\"subSlingId\"," +
-                "\"editable\":true," +
-                "\"maxRetries\":10," +
-                "\"packageHandling\":\"Extract\"," +
-                "\"packageNodeName\":\"package\"," +
-                "\"commandNodeName\":\"command\"," +
-                "\"extractorOverwriteFolderPrimaryTypes\":true}");
+                "{\"subAgentName\":\"subAgentName\"," + "\"subSlingId\":\"subSlingId\","
+                        + "\"editable\":true,"
+                        + "\"maxRetries\":10,"
+                        + "\"packageHandling\":\"Extract\","
+                        + "\"packageNodeName\":\"package\","
+                        + "\"commandNodeName\":\"command\","
+                        + "\"extractorOverwriteFolderPrimaryTypes\":true}");
     }
 }

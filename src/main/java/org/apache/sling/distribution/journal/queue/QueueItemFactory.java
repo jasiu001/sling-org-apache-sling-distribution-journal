@@ -18,25 +18,24 @@
  */
 package org.apache.sling.distribution.journal.queue;
 
-import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_PACKAGE_TYPE;
-import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS;
-import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_PATHS;
-import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_TYPE;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import org.apache.sling.distribution.DistributionRequestType;
-import org.apache.sling.distribution.queue.DistributionQueueItem;
-
 import org.apache.sling.distribution.journal.FullMessage;
 import org.apache.sling.distribution.journal.MessageInfo;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
 import org.apache.sling.distribution.journal.messages.PackageMessage.ReqType;
+import org.apache.sling.distribution.queue.DistributionQueueItem;
+
+import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_PACKAGE_TYPE;
+import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_DEEP_PATHS;
+import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_PATHS;
+import static org.apache.sling.distribution.packaging.DistributionPackageInfo.PROPERTY_REQUEST_TYPE;
 
 @ParametersAreNonnullByDefault
 public final class QueueItemFactory {
@@ -52,18 +51,14 @@ public final class QueueItemFactory {
     public static final String PACKAGE_MSG = "packageMessage";
 
     private static final String REQUEST_USER_ID = "internal.request.user";
-    
-    private QueueItemFactory() {
-    }
+
+    private QueueItemFactory() {}
 
     public static DistributionQueueItem fromPackage(FullMessage<PackageMessage> fMessage) {
         return fromPackage(fMessage.getInfo(), fMessage.getMessage(), false);
     }
-    
-    public static DistributionQueueItem fromPackage(
-            MessageInfo info, 
-            PackageMessage message,
-            boolean addMessage) {
+
+    public static DistributionQueueItem fromPackage(MessageInfo info, PackageMessage message, boolean addMessage) {
 
         String packageId = message.getPkgId();
         long pkgLength = message.getPkgLength();
@@ -86,24 +81,24 @@ public final class QueueItemFactory {
         }
         return new DistributionQueueItem(packageId, pkgLength, properties);
     }
-    
+
     private static DistributionRequestType toDistReqType(ReqType reqType) {
         switch (reqType) {
-        case ADD:
-            return DistributionRequestType.ADD;
-        case DELETE:
-            return DistributionRequestType.DELETE;
-        case INVALIDATE:
-            return DistributionRequestType.INVALIDATE;
-        case TEST:
-            return DistributionRequestType.TEST;
-        default:
-            throw new IllegalArgumentException("Unhandled DistributionRequestType: " + reqType.name());
+            case ADD:
+                return DistributionRequestType.ADD;
+            case DELETE:
+                return DistributionRequestType.DELETE;
+            case INVALIDATE:
+                return DistributionRequestType.INVALIDATE;
+            case TEST:
+                return DistributionRequestType.TEST;
+            default:
+                throw new IllegalArgumentException("Unhandled DistributionRequestType: " + reqType.name());
         }
     }
 
-	@Nonnull
+    @Nonnull
     private static String[] toArray(List<String> paths) {
-        return paths.isEmpty() ? new String[]{} : paths.toArray(new String[0]);
+        return paths.isEmpty() ? new String[] {} : paths.toArray(new String[0]);
     }
 }

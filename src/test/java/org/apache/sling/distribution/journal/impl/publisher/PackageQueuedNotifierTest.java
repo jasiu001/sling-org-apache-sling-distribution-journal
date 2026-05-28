@@ -18,10 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -38,6 +34,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.osgi.service.event.EventAdmin;
+
+import static java.lang.System.currentTimeMillis;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class PackageQueuedNotifierTest {
 
@@ -57,7 +57,7 @@ public class PackageQueuedNotifierTest {
         CompletableFuture<Long> arrived = notifier.registerWait("1");
         notifier.queued(singletonList(fullPkgMsg("2", 0)));
         try {
-            arrived.get(100,TimeUnit.MILLISECONDS);
+            arrived.get(100, TimeUnit.MILLISECONDS);
             Assert.fail("Expected TimeoutException");
         } catch (TimeoutException e) {
             // Expected
@@ -72,7 +72,7 @@ public class PackageQueuedNotifierTest {
         CompletableFuture<Long> arrived = notifier.registerWait("1");
         notifier.queued(emptyList());
         try {
-            arrived.get(100,TimeUnit.MILLISECONDS);
+            arrived.get(100, TimeUnit.MILLISECONDS);
             Assert.fail("Expected TimeoutException as package ID is null");
         } catch (TimeoutException e) {
             // Expected
@@ -85,11 +85,11 @@ public class PackageQueuedNotifierTest {
 
     private PackageMessage pkgMsg(String packageId) {
         return PackageMessage.builder()
-            .paths(Arrays.asList("/test"))
-            .pkgId(packageId)
-            .reqType(ReqType.ADD)
-            .pkgType("journal")
-            .pubSlingId("sling1")
-            .build();
+                .paths(Arrays.asList("/test"))
+                .pkgId(packageId)
+                .reqType(ReqType.ADD)
+                .pkgType("journal")
+                .pubSlingId("sling1")
+                .build();
     }
 }

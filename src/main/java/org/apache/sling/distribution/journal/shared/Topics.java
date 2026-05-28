@@ -25,8 +25,6 @@ public class Topics {
     public static final String STATUS_TOPIC = "status";
     public static final String COMMAND_TOPIC = "command";
     public static final String EVENT_TOPIC = "event";
-    
-    private Topics() {
-    }
-    
+
+    private Topics() {}
 }

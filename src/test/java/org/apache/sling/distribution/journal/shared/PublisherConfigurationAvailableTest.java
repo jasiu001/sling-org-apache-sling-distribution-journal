@@ -18,11 +18,6 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.util.Hashtable;
 
 import org.junit.After;
@@ -36,11 +31,16 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class PublisherConfigurationAvailableTest {
 
     private PublisherConfigurationAvailable configAvailable;
-    
+
     @Mock
     private BundleContext context;
 
@@ -52,38 +52,37 @@ public class PublisherConfigurationAvailableTest {
         configAvailable = new PublisherConfigurationAvailable();
         configAvailable.activate(context);
     }
-    
+
     @After
-    public void after() {
-    }
+    public void after() {}
 
     @Test
     public void testNoConfig() {
         assertThat(configAvailable.isAvailable(), equalTo(false));
         configAvailable.deactivate();
     }
-    
+
     @Test
     public void testConfig() throws ConfigurationException {
-        when(context.registerService(Mockito.eq(PublisherConfigurationAvailable.class), Mockito.eq(configAvailable), Mockito.any()))
-            .thenReturn(reg);
-        
+        when(context.registerService(
+                        Mockito.eq(PublisherConfigurationAvailable.class), Mockito.eq(configAvailable), Mockito.any()))
+                .thenReturn(reg);
+
         configAvailable.updated("any", new Hashtable<>());
         assertThat(configAvailable.isAvailable(), equalTo(true));
-        
+
         configAvailable.updated("any", new Hashtable<>());
         assertThat(configAvailable.isAvailable(), equalTo(true));
-        
+
         configAvailable.deleted("any");
         assertThat(configAvailable.isAvailable(), equalTo(true));
-        
+
         configAvailable.deactivate();
         verify(reg).unregister();
     }
-    
+
     @Test
     public void testGetName() throws ConfigurationException {
         assertThat(configAvailable.getName(), equalTo(PublisherConfigurationAvailable.class.getSimpleName()));
     }
-
 }

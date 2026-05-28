@@ -19,7 +19,7 @@
 package org.apache.sling.distribution.journal.queue;
 
 public class QueueState {
-    
+
     private final long lastProcessedOffset;
     private final int headRetries;
     private final int maxRetries;
@@ -31,15 +31,15 @@ public class QueueState {
         this.maxRetries = maxRetries;
         this.clearCallback = clearCallback;
     }
-    
+
     public long getLastProcessedOffset() {
         return lastProcessedOffset;
     }
-    
+
     public int getHeadRetries() {
         return headRetries;
     }
-    
+
     public int getMaxRetries() {
         return maxRetries;
     }

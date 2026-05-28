@@ -18,10 +18,10 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * Holds package retries by agent name
@@ -45,6 +45,8 @@ public class PackageRetries {
     }
 
     public int getSum() {
-        return pubAgentNameToRetries.values().stream().mapToInt(Integer::intValue).sum();
+        return pubAgentNameToRetries.values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
     }
 }

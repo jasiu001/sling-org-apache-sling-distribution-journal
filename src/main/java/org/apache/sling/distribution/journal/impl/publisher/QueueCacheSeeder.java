@@ -18,8 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.publisher;
 
-import static org.apache.sling.distribution.journal.RunnableUtil.startBackgroundThread;
-
 import java.io.Closeable;
 import java.util.UUID;
 
@@ -28,6 +26,8 @@ import org.apache.sling.distribution.journal.MessagingException;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.sling.distribution.journal.RunnableUtil.startBackgroundThread;
 
 public class QueueCacheSeeder implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(QueueCacheSeeder.class);
@@ -44,7 +44,7 @@ public class QueueCacheSeeder implements Closeable {
     private MessageSender<PackageMessage> sender;
 
     private Thread seedingThread;
-    
+
     public QueueCacheSeeder(MessageSender<PackageMessage> sender) {
         this.sender = sender;
     }
@@ -97,12 +97,12 @@ public class QueueCacheSeeder implements Closeable {
     /**
      * Sleep with handling of interrupts and quick exit in case of closed.
      * We do not interrupt the seeder thread from outside as this sometimes fails in the messaging impl code.
-     * 
+     *
      * @param sleepMs milliseconds to sleep
      */
     private void delay(long sleepMs) {
         long sleepCycles = sleepMs / 100;
-        for (int curCycle=0; curCycle < sleepCycles; curCycle++) {
+        for (int curCycle = 0; curCycle < sleepCycles; curCycle++) {
             if (closed) {
                 return;
             }

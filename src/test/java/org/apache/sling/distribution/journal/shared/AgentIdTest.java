@@ -18,9 +18,9 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class AgentIdTest {
 
@@ -37,7 +37,6 @@ public class AgentIdTest {
     private static final String SUB_AGENT_ID_3 = SLING_ID + "-" + SUB_AGENT_NAME_3;
     private static final String SUB_AGENT_ID_4 = SLING_ID + "-" + SUB_AGENT_NAME_4;
     private static final String SUB_AGENT_ID_5 = SLING_ID + "-" + SUB_AGENT_NAME_5;
-
 
     @Test
     public void testGetAgentId() throws Exception {
@@ -74,8 +73,8 @@ public class AgentIdTest {
         assertEquals(agentId1.getSlingId(), agentId2.getSlingId());
         assertEquals(agentId1.getAgentName(), agentId2.getAgentName());
     }
-    
-    @Test(expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void testIllegal() throws Exception {
         new AgentId(SLING_ID + "1", SUB_AGENT_ID_1);
     }

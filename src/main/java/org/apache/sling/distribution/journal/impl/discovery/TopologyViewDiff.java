@@ -18,6 +18,9 @@
  */
 package org.apache.sling.distribution.journal.impl.discovery;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.annotation.concurrent.Immutable;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -25,9 +28,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-
-import javax.annotation.ParametersAreNonnullByDefault;
-import javax.annotation.concurrent.Immutable;
 
 import static java.util.Collections.unmodifiableMap;
 import static java.util.function.Function.identity;
@@ -42,14 +42,10 @@ public class TopologyViewDiff {
 
     private final boolean subAgentChanged;
 
-
     public TopologyViewDiff(TopologyView oldView, TopologyView newView) {
-        oldOffsets = unmodifiableMap(oldView
-                .getMinOffsetByPubAgentName());
-        newOffsets = unmodifiableMap(newView
-                .getMinOffsetByPubAgentName());
-        subAgentChanged = ! Objects.equals(oldView.getSubscribedAgentIds(),
-                newView.getSubscribedAgentIds());
+        oldOffsets = unmodifiableMap(oldView.getMinOffsetByPubAgentName());
+        newOffsets = unmodifiableMap(newView.getMinOffsetByPubAgentName());
+        subAgentChanged = !Objects.equals(oldView.getSubscribedAgentIds(), newView.getSubscribedAgentIds());
     }
 
     /**

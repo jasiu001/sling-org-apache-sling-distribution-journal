@@ -29,7 +29,6 @@ import org.apache.sling.distribution.journal.impl.event.DistributionEvent;
 import org.apache.sling.distribution.journal.messages.PackageMessage;
 import org.apache.sling.distribution.journal.queue.QueuedCallback;
 import org.osgi.service.event.Event;
-
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class PackageQueuedNotifier implements QueuedCallback, Closeable {
      * (packageId x Future)
      */
     private final Map<String, CompletableFuture<Long>> receiveCallbacks;
-    
+
     public PackageQueuedNotifier(EventAdmin eventAdmin) {
         this.receiveCallbacks = new ConcurrentHashMap<>();
         this.eventAdmin = requireNonNull(eventAdmin);

@@ -32,17 +32,17 @@ public class InMemoryTopic {
     private final AtomicLong latestOffset;
     private final long earliestOffset;
     private final NavigableMap<Long, FullMessage<?>> messages = new ConcurrentSkipListMap<>();
-    
+
     public InMemoryTopic(String topicName) {
         this.topicName = topicName;
         this.earliestOffset = 0;
         this.latestOffset = new AtomicLong(0);
     }
-    
+
     public void setLatestOffset(long latestOffset) {
         this.latestOffset.set(latestOffset);
     }
-    
+
     public void send(Object msg) {
         long offset = latestOffset.getAndIncrement();
         TestMessageInfo info = new TestMessageInfo(topicName, 0, offset, System.currentTimeMillis());

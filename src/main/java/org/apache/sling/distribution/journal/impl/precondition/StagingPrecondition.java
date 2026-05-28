@@ -18,9 +18,6 @@
  */
 package org.apache.sling.distribution.journal.impl.precondition;
 
-import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_CONCURRENT;
-import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_PERIOD;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.commons.scheduler.Scheduler;
 import org.apache.sling.distribution.journal.MessagingProvider;
@@ -33,16 +30,19 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_CONCURRENT;
+import static org.apache.sling.commons.scheduler.Scheduler.PROPERTY_SCHEDULER_PERIOD;
+
 /**
  * This is a precondition that watches status messages from other instances in order to confirm that a package can be processed.
  * The check will block until a status is found. If no status is received in 60 seconds it will throw an exception.
  */
 @Component(
         property = {
-                "name=staging",
-                PROPERTY_SCHEDULER_CONCURRENT + ":Boolean=false",
-                Scheduler.PROPERTY_SCHEDULER_THREAD_POOL + ":String=" + DistributionThreadPool.THREAD_POOL_NAME,
-                PROPERTY_SCHEDULER_PERIOD + ":Long=" + 24 * 60 * 60, // 1 day
+            "name=staging",
+            PROPERTY_SCHEDULER_CONCURRENT + ":Boolean=false",
+            Scheduler.PROPERTY_SCHEDULER_THREAD_POOL + ":String=" + DistributionThreadPool.THREAD_POOL_NAME,
+            PROPERTY_SCHEDULER_PERIOD + ":Long=" + 24 * 60 * 60, // 1 day
         })
 public class StagingPrecondition implements Precondition, Runnable {
 
@@ -76,11 +76,10 @@ public class StagingPrecondition implements Precondition, Runnable {
     private synchronized Status getStatus(String subAgentName, long pkgOffset) {
         return watcher.getStatus(subAgentName, pkgOffset);
     }
-    
+
     public synchronized void run() {
         LOG.info("Purging StagingPrecondition cache");
         IOUtils.closeQuietly(watcher);
         watcher = new PackageStatusWatcher(messagingProvider);
     }
-
 }

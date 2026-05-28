@@ -37,8 +37,14 @@ public class DistributionFailureEvent {
     public static final String PROPERTY_WILL_DISCARD = "will.discard";
     public static final String PROPERTY_EXCEPTION = "exception";
 
-    public static Event build(PackageMessage packageMessage, long offset, Date createdDate, int numRetries, 
-            int maxRetries, boolean willDiscard, Exception ex) {
+    public static Event build(
+            PackageMessage packageMessage,
+            long offset,
+            Date createdDate,
+            int numRetries,
+            int maxRetries,
+            boolean willDiscard,
+            Exception ex) {
         Map<String, Object> properties = new HashMap<>();
         properties.put(PROPERTY_PACKAGE_MESSAGE, packageMessage);
         properties.put(PROPERTY_OFFSET, offset);
@@ -47,7 +53,7 @@ public class DistributionFailureEvent {
         properties.put(PROPERTY_NAX_RETRIES, maxRetries);
         properties.put(PROPERTY_WILL_DISCARD, willDiscard);
         properties.put(PROPERTY_EXCEPTION, ex);
-        
+
         return new Event(TOPIC_PACKAGE_FAILURE, properties);
     }
-} 
+}

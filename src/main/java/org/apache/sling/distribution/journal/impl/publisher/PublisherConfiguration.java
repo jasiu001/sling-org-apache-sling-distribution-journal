@@ -21,7 +21,8 @@ package org.apache.sling.distribution.journal.impl.publisher;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@ObjectClassDefinition(name = "Apache Sling Journal based Distribution - Pub Agent",
+@ObjectClassDefinition(
+        name = "Apache Sling Journal based Distribution - Pub Agent",
         description = "Apache Sling Content Distribution Pub agent")
 public @interface PublisherConfiguration {
 
@@ -33,21 +34,25 @@ public @interface PublisherConfiguration {
     @AttributeDefinition(name = "name", description = "The name of the agent")
     String name() default "";
 
-    @AttributeDefinition(name = "DistributionPackageBuilder target",
-            description = "The target reference for the DistributionPackageBuilder used to build/install content packages, e.g. use target=(name=...) to bind to a service by name.")
+    @AttributeDefinition(
+            name = "DistributionPackageBuilder target",
+            description =
+                    "The target reference for the DistributionPackageBuilder used to build/install content packages, e.g. use target=(name=...) to bind to a service by name.")
     String packageBuilder_target() default "(name=...)";
 
-    @AttributeDefinition(name = "Package queued timeout",
+    @AttributeDefinition(
+            name = "Package queued timeout",
             description = "Timeout in ms to be used when waiting for a package to be queued")
     int queuedTimeout() default 60000;
 
     int maxQueueSizeDelay() default 20000;
-    
+
     int queueSizeLimit() default DEFAULT_QUEUE_SIZE_LIMIT;
 
     @AttributeDefinition(
             name = "Aggregate subscriber queues",
-            description = "If true, list only virtual queues \"persisted\" (clearable cohort backlog) and \"public\" (all subscribers; read-only) "
-                    + "instead of per-subscriber queues; no error queues. Names \"persisted\" and \"public\" are reserved.")
+            description =
+                    "If true, list only virtual queues \"persisted\" (clearable cohort backlog) and \"public\" (all subscribers; read-only) "
+                            + "instead of per-subscriber queues; no error queues. Names \"persisted\" and \"public\" are reserved.")
     boolean aggregateSubscriberQueues() default false;
 }

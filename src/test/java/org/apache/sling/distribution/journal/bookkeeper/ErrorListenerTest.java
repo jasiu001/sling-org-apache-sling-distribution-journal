@@ -18,6 +18,9 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
+import org.apache.sling.commons.metrics.MetricsService;
+import org.apache.sling.commons.metrics.internal.MetricsServiceImpl;
+import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,10 +28,6 @@ import static org.apache.jackrabbit.vault.fs.api.ProgressTrackerListener.Mode.PA
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import org.apache.sling.commons.metrics.MetricsService;
-import org.apache.sling.commons.metrics.internal.MetricsServiceImpl;
-import org.apache.sling.testing.mock.osgi.junit.OsgiContext;
 
 public class ErrorListenerTest {
 
@@ -39,14 +38,15 @@ public class ErrorListenerTest {
     private static final String errorMsg = "Failed to import XYZ";
 
     private static final Exception exception = new Exception(errorMsg);
-    
+
     private OsgiContext context = new OsgiContext();
 
     @Before
     public void before() {
-    	MetricsService metricsService = context.registerInjectActivateService(MetricsServiceImpl.class);
-    	SubscriberMetrics subscriberMetrics = new SubscriberMetrics(metricsService, "publish_subscriber", "publish", false);
-		errorListener = new ErrorListener(subscriberMetrics);
+        MetricsService metricsService = context.registerInjectActivateService(MetricsServiceImpl.class);
+        SubscriberMetrics subscriberMetrics =
+                new SubscriberMetrics(metricsService, "publish_subscriber", "publish", false);
+        errorListener = new ErrorListener(subscriberMetrics);
     }
 
     @Test

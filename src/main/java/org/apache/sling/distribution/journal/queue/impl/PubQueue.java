@@ -18,14 +18,9 @@
  */
 package org.apache.sling.distribution.journal.queue.impl;
 
-import static java.util.Collections.emptyList;
-import static java.util.stream.StreamSupport.stream;
-import static org.apache.sling.distribution.queue.DistributionQueueCapabilities.CLEARABLE;
-import static org.apache.sling.distribution.queue.DistributionQueueCapabilities.REMOVABLE;
-import static org.apache.sling.distribution.queue.DistributionQueueItemState.QUEUED;
-import static org.apache.sling.distribution.queue.DistributionQueueState.BLOCKED;
-import static org.apache.sling.distribution.queue.DistributionQueueState.IDLE;
-import static org.apache.sling.distribution.queue.DistributionQueueState.RUNNING;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,10 +29,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.sling.distribution.journal.queue.ClearCallback;
 import org.apache.sling.distribution.journal.queue.OffsetQueue;
@@ -52,11 +43,19 @@ import org.apache.sling.distribution.queue.spi.DistributionQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.StreamSupport.stream;
+import static org.apache.sling.distribution.queue.DistributionQueueCapabilities.CLEARABLE;
+import static org.apache.sling.distribution.queue.DistributionQueueCapabilities.REMOVABLE;
+import static org.apache.sling.distribution.queue.DistributionQueueState.BLOCKED;
+import static org.apache.sling.distribution.queue.DistributionQueueState.IDLE;
+import static org.apache.sling.distribution.queue.DistributionQueueState.RUNNING;
+
 @ParametersAreNonnullByDefault
 public class PubQueue implements DistributionQueue {
-	
-	private static final int BLOCKED_AFTER_NUM_ATTEMPTS = 3;
-    
+
+    private static final int BLOCKED_AFTER_NUM_ATTEMPTS = 3;
+
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final String queueName;
@@ -71,15 +70,16 @@ public class PubQueue implements DistributionQueue {
 
     private final ClearCallback clearCallback;
 
-	private final QueueEntryFactory entryFactory;
+    private final QueueEntryFactory entryFactory;
 
-	private final Throwable error;
+    private final Throwable error;
 
-    public PubQueue(String queueName,
-                    OffsetQueue<DistributionQueueItem> offsetQueue,
-                    int retries,
-                    @Nullable Throwable error,
-                    @Nullable ClearCallback clearCallback) {
+    public PubQueue(
+            String queueName,
+            OffsetQueue<DistributionQueueItem> offsetQueue,
+            int retries,
+            @Nullable Throwable error,
+            @Nullable ClearCallback clearCallback) {
         this.queueName = Objects.requireNonNull(queueName);
         this.offsetQueue = Objects.requireNonNull(offsetQueue);
         this.retries = retries;
@@ -100,7 +100,7 @@ public class PubQueue implements DistributionQueue {
         this.entryFactory = new QueueEntryFactory(queueName, this::attempts, this::error);
         this.headItem = offsetQueue.getHeadItem();
     }
-    
+
     @Nonnull
     @Override
     public String getName() {
@@ -177,8 +177,7 @@ public class PubQueue implements DistributionQueue {
          * provided with the max offset (tailEntry).
          */
         log.info("Removing queue entries {}", entryIds);
-        Optional<String> tailEntryId = entryIds.stream()
-                .max(Comparator.comparingLong(EntryUtil::entryOffset));
+        Optional<String> tailEntryId = entryIds.stream().max(Comparator.comparingLong(EntryUtil::entryOffset));
         return tailEntryId.map(this::clear).orElse(emptyList());
     }
 
@@ -187,9 +186,7 @@ public class PubQueue implements DistributionQueue {
     public Iterable<DistributionQueueEntry> clear(int limit) {
         Iterable<DistributionQueueEntry> removed = getEntries(0, limit);
         // find the tail removed entry and clear from it
-        stream(removed.spliterator(), false)
-                .reduce((e1, e2) -> e2)
-                .ifPresent(this::clear);
+        stream(removed.spliterator(), false).reduce((e1, e2) -> e2).ifPresent(this::clear);
         return removed;
     }
 
@@ -202,10 +199,11 @@ public class PubQueue implements DistributionQueue {
         if (headEntry != null) {
             itemsCount = offsetQueue.getSize();
             DistributionQueueItemStatus status = headEntry.getStatus();
-            if (status.getItemState() == DistributionQueueItemState.ERROR && status.getAttempts() >= BLOCKED_AFTER_NUM_ATTEMPTS) {
-            	queueState = BLOCKED;
+            if (status.getItemState() == DistributionQueueItemState.ERROR
+                    && status.getAttempts() >= BLOCKED_AFTER_NUM_ATTEMPTS) {
+                queueState = BLOCKED;
             } else {
-            	queueState = RUNNING;
+                queueState = RUNNING;
             }
         } else {
             itemsCount = 0;
@@ -230,7 +228,7 @@ public class PubQueue implements DistributionQueue {
     }
 
     private Throwable error(DistributionQueueItem queueItem) {
-        return queueItem.equals(headItem) ? error : null ;
+        return queueItem.equals(headItem) ? error : null;
     }
 
     private Iterable<DistributionQueueEntry> clear(String tailEntryId) {
@@ -253,5 +251,4 @@ public class PubQueue implements DistributionQueue {
         long offset = EntryUtil.entryOffset(tailEntry.getId());
         clearCallback.clear(offset);
     }
-
 }

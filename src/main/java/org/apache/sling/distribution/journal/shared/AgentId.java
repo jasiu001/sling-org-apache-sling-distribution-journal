@@ -18,10 +18,10 @@
  */
 package org.apache.sling.distribution.journal.shared;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import java.util.Objects;
 import java.util.UUID;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 public class AgentId {
@@ -76,5 +76,4 @@ public class AgentId {
         }
         return slingId;
     }
-
 }

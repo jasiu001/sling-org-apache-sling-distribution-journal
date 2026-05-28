@@ -18,9 +18,9 @@
  */
 package org.apache.sling.distribution.journal.bookkeeper;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class PackageRetriesTest {
 
